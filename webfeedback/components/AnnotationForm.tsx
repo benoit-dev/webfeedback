@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { getConfig } from '../lib/config';
 import { createGitHubIssue } from '../lib/github';
 import { saveAnnotationMapping } from '../lib/storage';
@@ -77,13 +78,24 @@ ${description || 'No additional description provided.'}`;
         pageUrl,
       });
 
+      // Show success toast
+      toast.success('Annotation created successfully', {
+        description: 'The comment icon will appear on the page shortly.',
+      });
+
+      // Call onSuccess to trigger refetch
       onSuccess();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create annotation. Please try again.'
-      );
+      const errorMessage = err instanceof Error
+        ? err.message
+        : 'Failed to create annotation. Please try again.';
+      
+      // Show error toast
+      toast.error('Failed to create annotation', {
+        description: errorMessage,
+      });
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -98,20 +110,6 @@ ${description || 'No additional description provided.'}`;
         </Button>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="element-selector">Element on Page</Label>
-            <Input
-              id="element-selector"
-              value={elementSelector || 'No element selected'}
-              readOnly
-              placeholder="Element selector"
-              className="flex-1"
-            />
-            <p className="text-xs text-muted-foreground">
-              This element was selected from the page
-            </p>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input

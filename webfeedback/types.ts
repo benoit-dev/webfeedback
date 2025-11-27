@@ -17,6 +17,7 @@ export interface GitHubIssue {
   html_url: string;
   created_at: string;
   labels: Array<{ name: string; color: string }>;
+  comments?: number; // Comment count from GitHub API
 }
 
 export interface GitHubComment {

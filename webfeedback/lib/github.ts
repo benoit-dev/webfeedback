@@ -5,6 +5,12 @@ import type {
   AnnotationWithComments,
 } from '../types';
 import { getMappingsForPage } from './storage';
+import { parseIssueBody } from './issueParser';
+
+export interface IssueWithMetadata extends GitHubIssue {
+  parsedPageUrl: string | null;
+  parsedElementSelector: string | null;
+}
 
 export async function createGitHubIssue(
   config: GitHubConfig,
@@ -41,10 +47,10 @@ export async function getGitHubIssues(
   config: GitHubConfig,
   pageUrl: string
 ): Promise<GitHubIssue[]> {
-  // Fetch issues with labels that match our feedback labels
+  // Fetch issues with labels that match our feedback labels (only open issues)
   const labels = (config.labels || ['feedback']).join(',');
   const response = await fetch(
-    `https://api.github.com/repos/${config.owner}/${config.repo}/issues?labels=${labels}&state=all`,
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues?labels=${labels}&state=open`,
     {
       headers: {
         'Authorization': `token ${config.token}`,
@@ -118,5 +124,38 @@ export async function getAnnotationsWithComments(
   );
 
   return annotationResults.filter((a): a is AnnotationWithComments => a !== null);
+}
+
+export async function getAllIssues(
+  config: GitHubConfig
+): Promise<IssueWithMetadata[]> {
+  // Fetch issues with labels that match our feedback labels (only open issues)
+  const labels = (config.labels || ['feedback']).join(',');
+  const response = await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues?labels=${labels}&state=open&per_page=100`,
+    {
+      headers: {
+        'Authorization': `token ${config.token}`,
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to fetch GitHub issues: ${error}`);
+  }
+
+  const issues: GitHubIssue[] = await response.json();
+
+  // Parse each issue to extract page URL and element selector
+  return issues.map((issue) => {
+    const parsed = parseIssueBody(issue.body || '');
+    return {
+      ...issue,
+      parsedPageUrl: parsed.pageUrl,
+      parsedElementSelector: parsed.elementSelector,
+    };
+  });
 }
 

@@ -11,7 +11,10 @@ export function AnnotationList({ annotations }: AnnotationListProps) {
   return (
     <div className="space-y-4">
       {annotations.map((annotation) => (
-        <CommentThread key={annotation.id} annotation={annotation} />
+        <CommentThread 
+          key={annotation.id} 
+          annotation={annotation}
+        />
       ))}
     </div>
   );
