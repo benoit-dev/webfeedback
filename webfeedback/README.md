@@ -34,13 +34,13 @@ pnpm install
 
 ### 2. Run Setup Script
 
-Generate all API routes automatically:
+Generate all API routes automatically (they'll call GitHub API directly):
 
 ```bash
-node node_modules/webfeedback/scripts/setup.js http://localhost:3000
+node node_modules/webfeedback/scripts/setup.js
 ```
 
-Replace `http://localhost:3000` with your WebFeedback API server URL.
+This creates API routes that call GitHub directly - no proxy server needed!
 
 ### 3. Configure Environment Variables
 
@@ -111,12 +111,12 @@ pnpm update webfeedback
 
 ## How It Works
 
-1. **Widget** makes API calls to your proxy endpoints (`/api/webfeedback/*`)
-2. **Your Proxy** adds GitHub credentials from environment variables and forwards to WebFeedback API
-3. **WebFeedback API** makes GitHub API calls using the provided credentials
-4. **Response** flows back through the chain
+1. **Widget** makes API calls to your API routes (`/api/webfeedback/*`)
+2. **Your API Routes** call GitHub API directly using environment variables
+3. **GitHub API** responds with issue data
+4. **Response** flows back to the widget
 
-This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
+This architecture keeps your GitHub credentials secure on your server (in environment variables) while allowing the widget to work from any website.
 
 ## Usage
 
@@ -174,12 +174,10 @@ webfeedback/
 [Your App]
   └─ Widget (webfeedback package)
       └─ API Client (fetch calls)
-          └─ Your Proxy API (/api/webfeedback/*)
-              └─ Adds GitHub credentials from env vars
-                  └─ WebFeedback API Server (hosted)
-                      └─ tRPC procedures
-                          └─ GitHub API
+          └─ Your API Routes (/api/webfeedback/*)
+              └─ Calls GitHub API directly using env vars
+                  └─ GitHub API
 ```
 
-This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
+This architecture keeps your GitHub credentials secure on your server (in environment variables) while allowing the widget to work from any website. The API routes call GitHub directly - no proxy server needed!
 

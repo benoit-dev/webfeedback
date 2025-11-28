@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup:webfeedback": "node node_modules/webfeedback/scripts/setup.js http://localhost:3000"
+    "setup:webfeedback": "node node_modules/webfeedback/scripts/setup.js"
   },
   "dependencies": {
     "webfeedback": "git+https://github.com/yourusername/webfeedback.git#main:webfeedback",

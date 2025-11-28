@@ -2,34 +2,121 @@
 
 /**
  * WebFeedback Setup Script
- * Generates API route files for Next.js App Router
+ * Generates API route files for Next.js App Router that call GitHub API directly
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const API_ENDPOINT_PLACEHOLDER = 'YOUR_API_SERVER_URL';
+// Helper function to normalize URL to pathname + search for comparison
+function normalizeUrlForComparison(url) {
+  try {
+    // If it's already a pathname (starts with /), return as is
+    if (url.startsWith('/')) {
+      return url;
+    }
+    // If it's a full URL, extract pathname + search
+    const urlObj = new URL(url);
+    return urlObj.pathname + urlObj.search;
+  } catch {
+    // If URL parsing fails, try to extract pathname manually
+    const match = url.match(/\/\/[^\/]+(\/.*?)(?:\?|$)/);
+    return match ? match[1] : url;
+  }
+}
+
+// Parse page URL and element selector from GitHub issue body
+function parseIssueBody(body) {
+  const result = {
+    pageUrl: null,
+    elementSelector: null,
+  };
+
+  if (!body) return result;
+
+  // Extract Page URL
+  const pageUrlMatch = body.match(/\*\*Page URL:\*\*\s*(.+?)(?:\n|$)/i);
+  if (pageUrlMatch) {
+    result.pageUrl = pageUrlMatch[1].trim();
+  }
+
+  // Extract Element Selector
+  const elementSelectorMatch = body.match(/\*\*Element Selector:\*\*\s*`(.+?)`/i);
+  if (elementSelectorMatch) {
+    result.elementSelector = elementSelectorMatch[1].trim();
+  }
+
+  return result;
+}
+
+// Helper to get GitHub config from environment variables
+function getGitHubConfig() {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+
+  if (!token || !owner || !repo) {
+    throw new Error(
+      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
+    );
+  }
+
+  return { token, owner, repo };
+}
 
 const routes = {
   'app/api/webfeedback/issues/route.ts': `import { NextResponse } from 'next/server';
 
+// Helper function to normalize URL to pathname + search for comparison
+function normalizeUrlForComparison(url: string): string {
+  try {
+    if (url.startsWith('/')) {
+      return url;
+    }
+    const urlObj = new URL(url);
+    return urlObj.pathname + urlObj.search;
+  } catch {
+    const match = url.match(/\\/\\/[^\\/]+(\\/.*?)(?:\\?|$)/);
+    return match ? match[1] : url;
+  }
+}
+
+// Helper to get GitHub config from environment variables
+function getGitHubConfig() {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+
+  if (!token || !owner || !repo) {
+    throw new Error(
+      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
+    );
+  }
+
+  return { token, owner, repo };
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const config = getGitHubConfig();
     
-    // Forward to WebFeedback API with your GitHub credentials
-    const response = await fetch('${API_ENDPOINT_PLACEHOLDER}/api/trpc/github.createIssue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        json: {
-          ...body,
-          githubToken: process.env.GITHUB_TOKEN,
-          githubOwner: process.env.GITHUB_OWNER,
-          githubRepo: process.env.GITHUB_REPO,
-        }
-      }),
-    });
+    const response = await fetch(
+      \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues\`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': \`token \${config.token}\`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: body.title,
+          body: body.body,
+          labels: body.labels && body.labels.length > 0 ? body.labels : ['feedback'],
+        }),
+      }
+    );
     
     if (!response.ok) {
       const error = await response.text();
@@ -60,15 +147,16 @@ export async function GET(request: Request) {
       );
     }
     
+    const config = getGitHubConfig();
+    const labels = ['feedback'].join(',');
     const response = await fetch(
-      \`\${'${API_ENDPOINT_PLACEHOLDER}'}/api/trpc/github.getIssues?input=\${encodeURIComponent(JSON.stringify({ 
-        json: { 
-          pageUrl, 
-          githubToken: process.env.GITHUB_TOKEN, 
-          githubOwner: process.env.GITHUB_OWNER, 
-          githubRepo: process.env.GITHUB_REPO 
-        } 
-      }))}\`
+      \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues?labels=\${labels}&state=open\`,
+      {
+        headers: {
+          'Authorization': \`token \${config.token}\`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
     );
     
     if (!response.ok) {
@@ -79,10 +167,37 @@ export async function GET(request: Request) {
       );
     }
     
-    const result = await response.json();
-    // Extract the actual data from tRPC response format
-    const issues = result?.result?.data?.json || [];
-    return NextResponse.json(issues);
+    const issues = await response.json();
+    
+    // Normalize the search URL
+    const normalizedSearchUrl = normalizeUrlForComparison(pageUrl);
+    
+    // Filter issues that contain the page URL in the body
+    const filteredIssues = issues.filter((issue: any) => {
+      if (!issue.body) return false;
+      
+      // Check if body contains the normalized URL
+      if (issue.body.includes(normalizedSearchUrl)) {
+        return true;
+      }
+      
+      // Also check for the original URL format (for backward compatibility)
+      if (issue.body.includes(pageUrl)) {
+        return true;
+      }
+      
+      // Extract URL from issue body and normalize for comparison
+      const pageUrlMatch = issue.body.match(/\\*\\*Page URL:\\*\\*\\s*(.+?)(?:\\n|$)/i);
+      if (pageUrlMatch) {
+        const storedUrl = pageUrlMatch[1].trim();
+        const normalizedStoredUrl = normalizeUrlForComparison(storedUrl);
+        return normalizedStoredUrl === normalizedSearchUrl;
+      }
+      
+      return false;
+    });
+    
+    return NextResponse.json(filteredIssues);
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
@@ -94,16 +209,57 @@ export async function GET(request: Request) {
 
   'app/api/webfeedback/issues/all/route.ts': `import { NextResponse } from 'next/server';
 
+// Parse page URL and element selector from GitHub issue body
+function parseIssueBody(body: string) {
+  const result = {
+    pageUrl: null as string | null,
+    elementSelector: null as string | null,
+  };
+
+  if (!body) return result;
+
+  // Extract Page URL
+  const pageUrlMatch = body.match(/\\*\\*Page URL:\\*\\*\\s*(.+?)(?:\\n|$)/i);
+  if (pageUrlMatch) {
+    result.pageUrl = pageUrlMatch[1].trim();
+  }
+
+  // Extract Element Selector
+  const elementSelectorMatch = body.match(/\\*\\*Element Selector:\\*\\*\\s*\\\`(.+?)\\\`/i);
+  if (elementSelectorMatch) {
+    result.elementSelector = elementSelectorMatch[1].trim();
+  }
+
+  return result;
+}
+
+// Helper to get GitHub config from environment variables
+function getGitHubConfig() {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+
+  if (!token || !owner || !repo) {
+    throw new Error(
+      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
+    );
+  }
+
+  return { token, owner, repo };
+}
+
 export async function GET() {
   try {
+    const config = getGitHubConfig();
+    const labels = ['feedback'].join(',');
     const response = await fetch(
-      \`\${'${API_ENDPOINT_PLACEHOLDER}'}/api/trpc/github.getAllIssues?input=\${encodeURIComponent(JSON.stringify({ 
-        json: { 
-          githubToken: process.env.GITHUB_TOKEN, 
-          githubOwner: process.env.GITHUB_OWNER, 
-          githubRepo: process.env.GITHUB_REPO 
-        } 
-      }))}\`
+      \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues?labels=\${labels}&state=open&per_page=100\`,
+      {
+        headers: {
+          'Authorization': \`token \${config.token}\`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
     );
     
     if (!response.ok) {
@@ -114,10 +270,19 @@ export async function GET() {
       );
     }
     
-    const result = await response.json();
-    // Extract the actual data from tRPC response format
-    const issues = result?.result?.data?.json || [];
-    return NextResponse.json(issues);
+    const issues = await response.json();
+    
+    // Parse each issue to extract page URL and element selector
+    const issuesWithMetadata = issues.map((issue: any) => {
+      const parsed = parseIssueBody(issue.body || '');
+      return {
+        ...issue,
+        parsedPageUrl: parsed.pageUrl,
+        parsedElementSelector: parsed.elementSelector,
+      };
+    });
+    
+    return NextResponse.json(issuesWithMetadata);
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
@@ -129,12 +294,28 @@ export async function GET() {
 
   'app/api/webfeedback/issues/[id]/comments/route.ts': `import { NextResponse } from 'next/server';
 
+// Helper to get GitHub config from environment variables
+function getGitHubConfig() {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+
+  if (!token || !owner || !repo) {
+    throw new Error(
+      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
+    );
+  }
+
+  return { token, owner, repo };
+}
+
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const issueNumber = parseInt(params.id);
+    const { id } = await params;
+    const issueNumber = parseInt(id);
     
     if (isNaN(issueNumber)) {
       return NextResponse.json(
@@ -143,15 +324,15 @@ export async function GET(
       );
     }
     
+    const config = getGitHubConfig();
     const response = await fetch(
-      \`\${'${API_ENDPOINT_PLACEHOLDER}'}/api/trpc/github.getIssueComments?input=\${encodeURIComponent(JSON.stringify({ 
-        json: { 
-          issueNumber, 
-          githubToken: process.env.GITHUB_TOKEN, 
-          githubOwner: process.env.GITHUB_OWNER, 
-          githubRepo: process.env.GITHUB_REPO 
-        } 
-      }))}\`
+      \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues/\${issueNumber}/comments\`,
+      {
+        headers: {
+          'Authorization': \`token \${config.token}\`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
     );
     
     if (!response.ok) {
@@ -162,10 +343,7 @@ export async function GET(
       );
     }
     
-    const result = await response.json();
-    // Extract the actual data from tRPC response format
-    const comments = result?.result?.data?.json || [];
-    return NextResponse.json(comments);
+    return NextResponse.json(await response.json());
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
@@ -176,10 +354,11 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const issueNumber = parseInt(params.id);
+    const { id } = await params;
+    const issueNumber = parseInt(id);
     const body = await request.json();
     
     if (isNaN(issueNumber)) {
@@ -196,19 +375,21 @@ export async function POST(
       );
     }
     
-    const response = await fetch('${API_ENDPOINT_PLACEHOLDER}/api/trpc/github.createIssueComment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        json: {
-          issueNumber,
+    const config = getGitHubConfig();
+    const response = await fetch(
+      \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues/\${issueNumber}/comments\`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': \`token \${config.token}\`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           body: body.body,
-          githubToken: process.env.GITHUB_TOKEN,
-          githubOwner: process.env.GITHUB_OWNER,
-          githubRepo: process.env.GITHUB_REPO,
-        }
-      }),
-    });
+        }),
+      }
+    );
     
     if (!response.ok) {
       const error = await response.text();
@@ -218,8 +399,7 @@ export async function POST(
       );
     }
     
-    const result = await response.json();
-    return NextResponse.json(result?.result?.data?.json || result);
+    return NextResponse.json(await response.json());
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
@@ -230,6 +410,35 @@ export async function POST(
 `,
 
   'app/api/webfeedback/annotations/route.ts': `import { NextResponse } from 'next/server';
+
+// Helper function to normalize URL to pathname + search for comparison
+function normalizeUrlForComparison(url: string): string {
+  try {
+    if (url.startsWith('/')) {
+      return url;
+    }
+    const urlObj = new URL(url);
+    return urlObj.pathname + urlObj.search;
+  } catch {
+    const match = url.match(/\\/\\/[^\\/]+(\\/.*?)(?:\\?|$)/);
+    return match ? match[1] : url;
+  }
+}
+
+// Helper to get GitHub config from environment variables
+function getGitHubConfig() {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+
+  if (!token || !owner || !repo) {
+    throw new Error(
+      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
+    );
+  }
+
+  return { token, owner, repo };
+}
 
 export async function POST(request: Request) {
   try {
@@ -249,31 +458,103 @@ export async function POST(request: Request) {
       );
     }
     
-    const response = await fetch('${API_ENDPOINT_PLACEHOLDER}/api/trpc/github.getAnnotationsWithComments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        json: {
-          ...body,
-          githubToken: process.env.GITHUB_TOKEN,
-          githubOwner: process.env.GITHUB_OWNER,
-          githubRepo: process.env.GITHUB_REPO,
-        }
-      }),
-    });
+    const config = getGitHubConfig();
+    const labels = ['feedback'].join(',');
+    const response = await fetch(
+      \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues?labels=\${labels}&state=open\`,
+      {
+        headers: {
+          'Authorization': \`token \${config.token}\`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    );
     
     if (!response.ok) {
       const error = await response.text();
       return NextResponse.json(
-        { error: 'Failed to fetch annotations', details: error },
+        { error: 'Failed to fetch issues', details: error },
         { status: response.status }
       );
     }
     
-    const result = await response.json();
-    // Extract the actual data from tRPC response format
-    const annotations = result?.result?.data?.json || [];
-    return NextResponse.json(annotations);
+    const issues = await response.json();
+    
+    // Filter issues that match the page URL
+    const normalizedSearchUrl = normalizeUrlForComparison(body.pageUrl);
+    const filteredIssues = issues.filter((issue: any) => {
+      if (!issue.body) return false;
+      
+      if (issue.body.includes(normalizedSearchUrl)) {
+        return true;
+      }
+      
+      if (issue.body.includes(body.pageUrl)) {
+        return true;
+      }
+      
+      const pageUrlMatch = issue.body.match(/\\*\\*Page URL:\\*\\*\\s*(.+?)(?:\\n|$)/i);
+      if (pageUrlMatch) {
+        const storedUrl = pageUrlMatch[1].trim();
+        const normalizedStoredUrl = normalizeUrlForComparison(storedUrl);
+        return normalizedStoredUrl === normalizedSearchUrl;
+      }
+      
+      return false;
+    });
+    
+    // Combine mappings with issues and fetch comments
+    const annotationResults = await Promise.all(
+      body.mappings.map(async (mapping: any) => {
+        const issue = filteredIssues.find((i: any) => i.number === mapping.issueNumber);
+        if (!issue) {
+          // Issue might have been deleted or doesn't match filters
+          return null;
+        }
+
+        // Fetch comments for this issue
+        const commentsResponse = await fetch(
+          \`https://api.github.com/repos/\${config.owner}/\${config.repo}/issues/\${mapping.issueNumber}/comments\`,
+          {
+            headers: {
+              'Authorization': \`token \${config.token}\`,
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          }
+        );
+
+        if (!commentsResponse.ok) {
+          // If comments fail, still return the annotation without comments
+          return {
+            id: \`\${mapping.elementSelector}_\${mapping.pageUrl}\`,
+            elementSelector: mapping.elementSelector,
+            pageUrl: mapping.pageUrl,
+            issueNumber: mapping.issueNumber,
+            issueUrl: mapping.issueUrl,
+            createdAt: mapping.createdAt,
+            issue,
+            comments: [],
+            commentCount: 0,
+          };
+        }
+
+        const comments = await commentsResponse.json();
+
+        return {
+          id: \`\${mapping.elementSelector}_\${mapping.pageUrl}\`,
+          elementSelector: mapping.elementSelector,
+          pageUrl: mapping.pageUrl,
+          issueNumber: mapping.issueNumber,
+          issueUrl: mapping.issueUrl,
+          createdAt: mapping.createdAt,
+          issue,
+          comments,
+          commentCount: comments.length,
+        };
+      })
+    );
+    
+    return NextResponse.json(annotationResults.filter((a: any) => a !== null));
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
@@ -284,12 +565,9 @@ export async function POST(request: Request) {
 `,
 };
 
-function createFile(filePath, content, apiUrl) {
+function createFile(filePath, content) {
   const fullPath = path.join(process.cwd(), filePath);
   const dir = path.dirname(fullPath);
-  
-  // Replace placeholder with actual API URL
-  const finalContent = content.replace(new RegExp(API_ENDPOINT_PLACEHOLDER, 'g'), apiUrl);
   
   // Create directory if it doesn't exist
   if (!fs.existsSync(dir)) {
@@ -304,24 +582,20 @@ function createFile(filePath, content, apiUrl) {
   }
   
   // Write file
-  fs.writeFileSync(fullPath, finalContent, 'utf8');
+  fs.writeFileSync(fullPath, content, 'utf8');
   console.log(`✅ Created: ${filePath}`);
   return true;
 }
 
 function main() {
-  const args = process.argv.slice(2);
-  const apiUrl = args[0] || 'http://localhost:3000';
-  
   console.log('\n🚀 WebFeedback Setup Script\n');
-  console.log(`API Server URL: ${apiUrl}\n`);
-  console.log('Generating API route files...\n');
+  console.log('Generating API route files that call GitHub API directly...\n');
   
   let created = 0;
   let skipped = 0;
   
   for (const [filePath, content] of Object.entries(routes)) {
-    if (createFile(filePath, content, apiUrl)) {
+    if (createFile(filePath, content)) {
       created++;
     } else {
       skipped++;
@@ -331,11 +605,10 @@ function main() {
   console.log(`\n✨ Done! Created ${created} file(s), skipped ${skipped} existing file(s).\n`);
   console.log('Next steps:');
   console.log('1. Set environment variables in .env.local:');
-  console.log('   GITHUB_TOKEN=your_token');
-  console.log('   GITHUB_OWNER=your_username');
-  console.log('   GITHUB_REPO=your_repo');
-  console.log('2. Update the API server URL in the generated files if needed');
-  console.log('3. Initialize the widget in your app:\n');
+  console.log('   GITHUB_TOKEN=your_github_personal_access_token');
+  console.log('   GITHUB_OWNER=your_github_username_or_org');
+  console.log('   GITHUB_REPO=your_repository_name');
+  console.log('2. Initialize the widget in your app:\n');
   console.log('   import { FloatingWidget, init } from "webfeedback";');
   console.log('   init({ apiEndpoint: "/api/webfeedback" });');
   console.log('   <FloatingWidget />\n');
@@ -346,4 +619,3 @@ if (require.main === module) {
 }
 
 module.exports = { createFile, routes };
-

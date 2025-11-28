@@ -39,16 +39,16 @@ yarn install
 Run the setup script to automatically generate all required API route files:
 
 ```bash
-node node_modules/webfeedback/scripts/setup.js http://localhost:3000
+node node_modules/webfeedback/scripts/setup.js
 ```
 
-Replace `http://localhost:3000` with your WebFeedback API server URL.
-
-This will create:
+This will create API routes that call the GitHub API directly:
 - `app/api/webfeedback/issues/route.ts`
 - `app/api/webfeedback/issues/all/route.ts`
 - `app/api/webfeedback/issues/[id]/comments/route.ts`
 - `app/api/webfeedback/annotations/route.ts`
+
+**Note:** The generated routes call the GitHub API directly using your environment variables. No proxy server needed!
 
 ### 3. Configure Environment Variables
 
@@ -230,7 +230,7 @@ The widget uses Tailwind CSS classes. You can customize the appearance by:
 
 1. Verify environment variables are set correctly
 2. Check that API routes were generated successfully
-3. Verify your WebFeedback API server is running
+3. Verify your GitHub token has the correct permissions
 4. Check network tab for failed requests
 
 ### Styling Issues
@@ -252,14 +252,12 @@ Your GitHub personal access token needs these permissions:
 [Your App]
   └─ Widget (webfeedback package)
       └─ API Client (fetch calls)
-          └─ Your Proxy API (/api/webfeedback/*)
-              └─ Adds GitHub credentials from env vars
-                  └─ WebFeedback API Server (hosted)
-                      └─ tRPC procedures
-                          └─ GitHub API
+          └─ Your API Routes (/api/webfeedback/*)
+              └─ Calls GitHub API directly using env vars
+                  └─ GitHub API
 ```
 
-This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
+This architecture keeps your GitHub credentials secure on your server (in environment variables) while allowing the widget to work from any website. The API routes call GitHub directly - no proxy server needed!
 
 ## Support
 

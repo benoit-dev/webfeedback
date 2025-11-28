@@ -35,13 +35,13 @@ pnpm install
 
 ### 2. Run Setup Script
 
-Generate all API routes automatically:
+Generate all API routes automatically (they'll call GitHub API directly):
 
 ```bash
-node node_modules/webfeedback/scripts/setup.js http://localhost:3000
+node node_modules/webfeedback/scripts/setup.js
 ```
 
-Replace `http://localhost:3000` with your WebFeedback API server URL.
+This creates API routes that call GitHub directly - no proxy server needed!
 
 ### 3. Configure Environment Variables
 
@@ -154,20 +154,18 @@ Open [http://localhost:3000](http://localhost:3000) to see the demo.
 
 ## Architecture
 
-The widget uses a proxy-based architecture for security:
+The widget uses a simple, direct architecture:
 
 ```
 [Your App]
   └─ Widget (webfeedback package)
       └─ API Client (fetch calls)
-          └─ Your Proxy API (/api/webfeedback/*)
-              └─ Adds GitHub credentials from env vars
-                  └─ WebFeedback API Server (this repo)
-                      └─ tRPC procedures
-                          └─ GitHub API
+          └─ Your API Routes (/api/webfeedback/*)
+              └─ Calls GitHub API directly using env vars
+                  └─ GitHub API
 ```
 
-This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
+This architecture keeps your GitHub credentials secure on your server (in environment variables) while allowing the widget to work from any website. The API routes call GitHub directly - no proxy server needed!
 
 ## Updating the Widget
 

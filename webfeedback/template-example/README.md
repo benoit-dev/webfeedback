@@ -16,10 +16,10 @@ This is a minimal example project demonstrating how to integrate the WebFeedback
    
    Or manually:
    ```bash
-   node node_modules/webfeedback/scripts/setup.js http://localhost:3000
+   node node_modules/webfeedback/scripts/setup.js
    ```
    
-   Replace `http://localhost:3000` with your WebFeedback API server URL.
+   This creates API routes that call GitHub directly - no proxy server needed!
 
 3. **Configure environment variables:**
    ```bash
