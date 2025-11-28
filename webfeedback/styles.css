@@ -1,13 +1,15 @@
 /**
- * WebFeedback Widget - Required CSS Variables
+ * WebFeedback Widget - Scoped CSS Variables
  * 
- * Add these CSS variables to your global CSS file (e.g., app/globals.css)
- * or import this file in your root layout.
+ * These CSS variables are scoped to [data-webfeedback] to prevent
+ * conflicts with the host project's styles.
  * 
- * These variables are required for the widget to display correctly.
+ * Import this file in your root layout or global CSS.
+ * The widget will automatically apply these scoped styles.
  */
 
-:root {
+/* Scoped to widget container to avoid style conflicts */
+[data-webfeedback] {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -29,7 +31,9 @@
   --ring: oklch(0.708 0 0);
 }
 
-.dark {
+/* Dark mode support - scoped to widget */
+[data-webfeedback].dark,
+[data-webfeedback] .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

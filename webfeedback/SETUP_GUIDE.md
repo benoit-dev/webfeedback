@@ -62,60 +62,15 @@ GITHUB_REPO=your_repository_name
 
 **Important:** These are server-side only (no `NEXT_PUBLIC_` prefix). The GitHub token is never exposed to the client browser.
 
-### 4. Add Tailwind CSS Variables
+### 4. Add CSS Styles
 
-The widget requires CSS variables for theming. Add these to your global CSS file (e.g., `app/globals.css`):
-
-```css
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-}
-```
-
-Or import the provided CSS file:
+The widget uses scoped CSS variables that won't conflict with your project's styles. Simply import the provided CSS file in your global CSS file (e.g., `app/globals.css`):
 
 ```css
 @import "webfeedback/styles.css";
 ```
+
+**Note:** The widget's CSS variables are scoped to `[data-webfeedback]` attributes, so they won't interfere with your project's existing styles. The widget automatically applies these scoped styles to all its components, including modals and dialogs that render in portals.
 
 ### 5. Initialize and Render the Widget
 

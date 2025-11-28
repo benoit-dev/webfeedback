@@ -275,7 +275,7 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
   }, [isDrawerOpen, isAllIssuesModalOpen, showComments]);
 
   return (
-    <>
+    <div data-webfeedback="root">
       <div
         className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3 ${className || ''}`}
         style={{ position: 'fixed' }}
@@ -337,6 +337,7 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
       {showAnnotationForm && (
         <div 
           className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50"
+          data-webfeedback="overlay"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowAnnotationForm(false);
@@ -346,6 +347,7 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
         >
           <div 
             className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            data-webfeedback="dialog"
             onClick={(e) => e.stopPropagation()}
           >
             <AnnotationForm
@@ -398,7 +400,7 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
         }}
         issue={selectedIssueForDrawer}
       />
-    </>
+    </div>
   );
 }
 

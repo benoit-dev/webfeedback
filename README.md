@@ -53,24 +53,15 @@ GITHUB_OWNER=your_github_username_or_org
 GITHUB_REPO=your_repository_name
 ```
 
-### 4. Add CSS Variables
+### 4. Add CSS Styles
 
-Add to your `app/globals.css`:
-
-```css
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  /* ... see webfeedback/SETUP_GUIDE.md for full list */
-}
-```
-
-Or import the provided CSS:
+Import the widget's CSS file in your global CSS (e.g., `app/globals.css`):
 
 ```css
 @import "webfeedback/styles.css";
 ```
+
+**Note:** The widget uses scoped CSS variables that won't conflict with your project's styles. The CSS variables are automatically scoped to the widget components, so they won't interfere with your existing styles.
 
 ### 5. Initialize Widget
 
