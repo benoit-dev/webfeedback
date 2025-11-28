@@ -43,6 +43,23 @@ export async function createGitHubIssue(
   return response.json();
 }
 
+// Helper function to normalize URL to pathname + search for comparison
+function normalizeUrlForComparison(url: string): string {
+  try {
+    // If it's already a pathname (starts with /), return as is
+    if (url.startsWith('/')) {
+      return url;
+    }
+    // If it's a full URL, extract pathname + search
+    const urlObj = new URL(url);
+    return urlObj.pathname + urlObj.search;
+  } catch {
+    // If URL parsing fails, try to extract pathname manually
+    const match = url.match(/\/\/[^\/]+(\/.*?)(?:\?|$)/);
+    return match ? match[1] : url;
+  }
+}
+
 export async function getGitHubIssues(
   config: GitHubConfig,
   pageUrl: string
@@ -66,8 +83,34 @@ export async function getGitHubIssues(
 
   const issues: GitHubIssue[] = await response.json();
 
+  // Normalize the search URL
+  const normalizedSearchUrl = normalizeUrlForComparison(pageUrl);
+
   // Filter issues that contain the page URL in the body
-  return issues.filter((issue) => issue.body.includes(pageUrl));
+  // Match both the original URL format and normalized format for backward compatibility
+  return issues.filter((issue) => {
+    if (!issue.body) return false;
+    
+    // Check if body contains the normalized URL
+    if (issue.body.includes(normalizedSearchUrl)) {
+      return true;
+    }
+    
+    // Also check for the original URL format (for backward compatibility)
+    if (issue.body.includes(pageUrl)) {
+      return true;
+    }
+    
+    // Extract URL from issue body and normalize for comparison
+    const pageUrlMatch = issue.body.match(/\*\*Page URL:\*\*\s*(.+?)(?:\n|$)/i);
+    if (pageUrlMatch) {
+      const storedUrl = pageUrlMatch[1].trim();
+      const normalizedStoredUrl = normalizeUrlForComparison(storedUrl);
+      return normalizedStoredUrl === normalizedSearchUrl;
+    }
+    
+    return false;
+  });
 }
 
 export async function getGitHubIssueComments(

@@ -98,16 +98,28 @@ export function IssuesListPage({ configError, onViewOnPage, shouldRefetch, filte
     ([, a], [, b]) => b.length - a.length
   );
 
-  // Helper function to get base path from URL
+  // Helper function to get page name from URL
   const getBasePath = (url: string): string => {
+    let pathname = '/';
     try {
       const urlObj = new URL(url);
-      return urlObj.pathname || '/';
+      pathname = urlObj.pathname || '/';
     } catch {
       // If URL parsing fails, try to extract pathname manually
       const match = url.match(/\/\/[^\/]+(\/.*?)(?:\?|$)/);
-      return match ? match[1] : url;
+      pathname = match ? match[1] : url;
     }
+    
+    // Normalize pathname
+    if (!pathname || pathname === '/') {
+      return 'root';
+    }
+    
+    // Remove leading and trailing slashes, then get the first segment
+    const segments = pathname.replace(/^\/+|\/+$/g, '').split('/');
+    const pageName = segments[0] || 'root';
+    
+    return pageName;
   };
 
   if (loading) {

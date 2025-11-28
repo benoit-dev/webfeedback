@@ -33,9 +33,53 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
   const previousShowCommentsRef = useRef(true);
   const wasAnyOpenRef = useRef(false);
 
+  // Helper function to normalize URL to pathname + search (without origin)
+  const normalizePageUrl = (): string => {
+    const pathname = window.location.pathname;
+    const search = window.location.search;
+    const normalizedPath = pathname + search;
+    
+    // Prepend NEXT_PUBLIC_URL if available
+    const baseUrl = process.env.NEXT_PUBLIC_URL;
+    if (baseUrl) {
+      // Ensure baseUrl doesn't end with / and path starts with /
+      const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+      const cleanPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
+      return `${cleanBaseUrl}${cleanPath}`;
+    }
+    
+    return normalizedPath;
+  };
+
   useEffect(() => {
-    // Get current page URL
-    setPageUrl(window.location.href);
+    // Get current page URL (normalized to pathname + search)
+    setPageUrl(normalizePageUrl());
+    
+    // Listen for route changes
+    const handleRouteChange = () => {
+      setPageUrl(normalizePageUrl());
+    };
+    
+    // Listen to popstate for browser back/forward
+    window.addEventListener('popstate', handleRouteChange);
+    
+    // For Next.js App Router, observe pathname changes
+    let lastPathname = window.location.pathname;
+    const checkRouteChange = () => {
+      const currentPathname = window.location.pathname;
+      if (currentPathname !== lastPathname) {
+        lastPathname = currentPathname;
+        handleRouteChange();
+      }
+    };
+    
+    // Check for route changes periodically (Next.js App Router doesn't expose router events)
+    const interval = setInterval(checkRouteChange, 100);
+    
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      clearInterval(interval);
+    };
   }, []);
 
   const { annotations, loading, refresh } = useAnnotations(pageUrl);
@@ -76,7 +120,7 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
     // and fetch the issue directly
     if (!loading) {
       const mappings = getAllMappings();
-      const currentUrl = window.location.href.split('?')[0];
+      const currentUrl = normalizePageUrl();
       
       // Try to find mapping for current page
       let mapping = mappings.find(
