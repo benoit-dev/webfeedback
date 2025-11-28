@@ -1,16 +1,110 @@
-# WebFeedback Widget Demo
+# WebFeedback Widget
 
-This is a demo project for the WebFeedback widget - a tool that allows users to annotate web pages and automatically create GitHub issues.
+A reusable React widget for collecting web page annotations and syncing them with GitHub issues. This repository contains both the widget package and a demo application.
 
 ## Features
 
-- 🎯 Element selection and annotation
-- 💬 GitHub issue creation
-- 🔄 Comment synchronization
-- 📍 Visual annotation markers
-- 🎨 Beautiful UI with ShadCN
+- 🎯 **Element Selection**: Click to select any element on the page
+- 💬 **GitHub Integration**: Automatically creates GitHub issues from annotations
+- 🔄 **Comment Sync**: Displays GitHub issue comments on the website
+- 📍 **Visual Markers**: Shows annotation markers on annotated elements
+- 🎨 **Beautiful UI**: Built with bundled ShadCN UI components (no setup required!)
+- 📦 **Self-Contained**: All UI components bundled - no need to install ShadCN separately
+- 🚀 **Easy Setup**: Automated setup script generates API routes
 
-## Getting Started
+## Quick Start (Using the Widget in Your Project)
+
+### 1. Install the Package
+
+Add to your `package.json`:
+
+```json
+{
+  "dependencies": {
+    "webfeedback": "git+https://github.com/yourusername/webfeedback.git#main:webfeedback"
+  }
+}
+```
+
+Then install:
+
+```bash
+pnpm install
+# or npm install / yarn install
+```
+
+### 2. Run Setup Script
+
+Generate all API routes automatically:
+
+```bash
+node node_modules/webfeedback/scripts/setup.js http://localhost:3000
+```
+
+Replace `http://localhost:3000` with your WebFeedback API server URL.
+
+### 3. Configure Environment Variables
+
+Create `.env.local`:
+
+```env
+GITHUB_TOKEN=your_github_personal_access_token
+GITHUB_OWNER=your_github_username_or_org
+GITHUB_REPO=your_repository_name
+```
+
+### 4. Add CSS Variables
+
+Add to your `app/globals.css`:
+
+```css
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  /* ... see webfeedback/SETUP_GUIDE.md for full list */
+}
+```
+
+Or import the provided CSS:
+
+```css
+@import "webfeedback/styles.css";
+```
+
+### 5. Initialize Widget
+
+```tsx
+// app/layout.tsx
+'use client';
+import { useEffect } from 'react';
+import { FloatingWidget, init } from 'webfeedback';
+
+export default function RootLayout({ children }) {
+  useEffect(() => {
+    init({ apiEndpoint: '/api/webfeedback' });
+  }, []);
+
+  return (
+    <html>
+      <body>
+        {children}
+        <FloatingWidget />
+      </body>
+    </html>
+  );
+}
+```
+
+## 📚 Complete Documentation
+
+- **[webfeedback/SETUP_GUIDE.md](./webfeedback/SETUP_GUIDE.md)** - Detailed setup instructions
+- **[webfeedback/README.md](./webfeedback/README.md)** - Widget package documentation
+- **[webfeedback/template-example/](./webfeedback/template-example/)** - Complete example project
+
+## Running the Demo
+
+This repository also includes a demo application:
 
 ### 1. Install Dependencies
 
@@ -40,11 +134,48 @@ Open [http://localhost:3000](http://localhost:3000) to see the demo.
 
 ## Project Structure
 
-- `app/` - Next.js app pages (demo content)
-- `webfeedback/` - Reusable widget module
-- `components/ui/` - ShadCN UI components
-- `lib/trpc/` - tRPC setup
-- `server/trpc/` - tRPC server
+```
+.
+├── app/                    # Next.js demo app pages
+├── webfeedback/            # Widget package (reusable)
+│   ├── components/         # React components (including bundled UI)
+│   ├── hooks/              # React hooks
+│   ├── lib/                # Utilities (API client, storage, config)
+│   ├── scripts/            # Setup script for generating API routes
+│   ├── template-example/   # Example Next.js project
+│   ├── styles.css          # Required CSS variables
+│   ├── package.json        # Package configuration
+│   ├── README.md           # Widget documentation
+│   └── SETUP_GUIDE.md      # Detailed setup guide
+├── components/ui/          # ShadCN UI components (for demo app)
+├── lib/trpc/               # tRPC setup
+└── server/trpc/            # tRPC server (API endpoints)
+```
+
+## Architecture
+
+The widget uses a proxy-based architecture for security:
+
+```
+[Your App]
+  └─ Widget (webfeedback package)
+      └─ API Client (fetch calls)
+          └─ Your Proxy API (/api/webfeedback/*)
+              └─ Adds GitHub credentials from env vars
+                  └─ WebFeedback API Server (this repo)
+                      └─ tRPC procedures
+                          └─ GitHub API
+```
+
+This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
+
+## Updating the Widget
+
+When the widget is updated in this repository, update it in your project:
+
+```bash
+pnpm update webfeedback
+```
 
 ## Using the Widget
 
@@ -55,34 +186,22 @@ The widget appears as a floating button in the bottom-right corner. Click it to:
 3. See GitHub issues created automatically
 4. View comments from GitHub issues
 
-## Using as an Embeddable Widget
-
-The widget can be embedded in any app that supports React. Here's how:
-
-### Architecture
-
-The widget uses a proxy-based architecture for security:
-
-```
-Widget → Client's Proxy API → WebFeedback API → GitHub
-         (adds env vars)      (uses them)
-```
-
-### Setup Steps
-
-1. **Copy the widget** - Copy the `webfeedback/` folder to your project
-2. **Set environment variables** - Add `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO` to your server
-3. **Create proxy endpoints** - Set up API routes that forward requests with your GitHub credentials
-4. **Initialize widget** - Call `init({ apiEndpoint: '/api/webfeedback' })` in your app
-5. **Add widget** - Import and render `<FloatingWidget />` in your layout
-
-See `webfeedback/README.md` for detailed setup instructions and proxy examples.
-
 ## Tech Stack
 
 - Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS
-- ShadCN UI
+- ShadCN UI (bundled in widget package)
 - tRPC
 - GitHub API
+
+## GitHub Token Permissions
+
+Your GitHub personal access token needs these permissions:
+- `repo` (for private repos) or `public_repo` (for public repos)
+- `issues:write` (to create issues)
+- `issues:read` (to read issues and comments)
+
+## License
+
+MIT
