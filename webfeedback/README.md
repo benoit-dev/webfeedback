@@ -8,38 +8,74 @@ A reusable React component for collecting web page annotations and syncing them 
 - 💬 **GitHub Integration**: Automatically creates GitHub issues from annotations
 - 🔄 **Comment Sync**: Displays GitHub issue comments on the website
 - 📍 **Visual Markers**: Shows annotation markers on annotated elements
-- 🎨 **Beautiful UI**: Built with ShadCN UI components
+- 🎨 **Beautiful UI**: Built with bundled ShadCN UI components (no setup required!)
+- 📦 **Self-Contained**: All UI components bundled - no need to install ShadCN separately
+- 🚀 **Easy Setup**: Automated setup script generates API routes
 
-## Installation
+## Quick Start
 
-Copy the `webfeedback/` folder into your Next.js project.
+### 1. Install the Package
 
-## Setup
+Add to your `package.json`:
 
-### 1. Environment Variables
-
-Create a `.env.local` file in your project root:
-
-```env
-NEXT_PUBLIC_GITHUB_TOKEN=your_github_personal_access_token
-NEXT_PUBLIC_GITHUB_OWNER=your_github_username_or_org
-NEXT_PUBLIC_GITHUB_REPO=your_repository_name
+```json
+{
+  "dependencies": {
+    "webfeedback": "git+https://github.com/yourusername/webfeedback.git#main:webfeedback"
+  }
+}
 ```
 
-### 2. Import in Layout
+Then install:
 
-Add the widget to your root layout:
+```bash
+pnpm install
+```
+
+### 2. Run Setup Script
+
+Generate all API routes automatically:
+
+```bash
+node node_modules/webfeedback/scripts/setup.js http://localhost:3000
+```
+
+Replace `http://localhost:3000` with your WebFeedback API server URL.
+
+### 3. Configure Environment Variables
+
+Create `.env.local`:
+
+```env
+GITHUB_TOKEN=your_github_personal_access_token
+GITHUB_OWNER=your_github_username_or_org
+GITHUB_REPO=your_repository_name
+```
+
+### 4. Add CSS Variables
+
+Add to your `app/globals.css` (or import `webfeedback/styles.css`):
+
+```css
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  /* ... see SETUP_GUIDE.md for full list */
+}
+```
+
+### 5. Initialize Widget
 
 ```tsx
 // app/layout.tsx
-import { FloatingWidget, setupConfig, getConfigFromEnv } from '@/webfeedback';
+'use client';
 import { useEffect } from 'react';
+import { FloatingWidget, init } from 'webfeedback';
 
 export default function RootLayout({ children }) {
   useEffect(() => {
-    // Configure from environment variables
-    const config = getConfigFromEnv();
-    setupConfig(config);
+    init({ apiEndpoint: '/api/webfeedback' });
   }, []);
 
   return (
@@ -53,20 +89,34 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 3. Manual Configuration (Alternative)
+## 📚 Complete Setup Guide
 
-If you prefer not to use environment variables:
+For detailed setup instructions, see **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**.
 
-```tsx
-import { FloatingWidget, setupConfig } from '@/webfeedback';
+## 📦 What's Included
 
-setupConfig({
-  token: 'your_token',
-  owner: 'your_org',
-  repo: 'your_repo',
-  labels: ['feedback', 'annotation'], // optional
-});
+- ✅ All UI components (Button, Dialog, Sheet, Card, etc.) - **no ShadCN setup needed!**
+- ✅ Setup script to generate API routes automatically
+- ✅ TypeScript types
+- ✅ Example template project
+- ✅ Comprehensive documentation
+
+## 🔄 Updating the Widget
+
+When the widget is updated in the repository, update it in your project:
+
+```bash
+pnpm update webfeedback
 ```
+
+## How It Works
+
+1. **Widget** makes API calls to your proxy endpoints (`/api/webfeedback/*`)
+2. **Your Proxy** adds GitHub credentials from environment variables and forwards to WebFeedback API
+3. **WebFeedback API** makes GitHub API calls using the provided credentials
+4. **Response** flows back through the chain
+
+This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
 
 ## Usage
 
@@ -96,11 +146,40 @@ webfeedback/
 └── index.ts            # Main exports
 ```
 
-## Extracting for Reuse
+## Example Project
 
-To use this widget in another project:
+See the `template-example/` directory for a complete working example.
 
-1. Copy the entire `webfeedback/` folder
-2. Ensure ShadCN UI is set up in the target project
-3. Import and configure as shown above
+## Structure
+
+```
+webfeedback/
+├── components/          # React components (including bundled UI components)
+│   └── ui/            # ShadCN UI components (bundled)
+├── hooks/              # React hooks
+├── lib/                # Utilities (API client, storage, config)
+├── scripts/            # Setup script for generating API routes
+├── template-example/   # Example Next.js project
+├── styles.css          # Required CSS variables
+├── types.ts            # TypeScript types
+├── index.ts            # Main exports
+├── package.json        # Package configuration
+├── README.md           # This file
+└── SETUP_GUIDE.md      # Detailed setup instructions
+```
+
+## Architecture
+
+```
+[Your App]
+  └─ Widget (webfeedback package)
+      └─ API Client (fetch calls)
+          └─ Your Proxy API (/api/webfeedback/*)
+              └─ Adds GitHub credentials from env vars
+                  └─ WebFeedback API Server (hosted)
+                      └─ tRPC procedures
+                          └─ GitHub API
+```
+
+This architecture keeps your GitHub credentials secure on your server while allowing the widget to work from any website.
 

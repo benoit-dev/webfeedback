@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { trpc } from '@/lib/trpc/client';
+import { useState, useEffect } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { Button } from './ui/button';
+import { getIssueComments, createIssueComment } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2, Send } from 'lucide-react';
-import type { IssueWithMetadata, GitHubComment } from '../lib/github';
+import type { IssueWithMetadata } from '../types';
+import type { GitHubComment } from '../types';
 
 interface IssueDetailDrawerProps {
   isOpen: boolean;
@@ -36,39 +37,53 @@ function extractDescription(body: string): string {
 export function IssueDetailDrawer({ isOpen, onClose, issue }: IssueDetailDrawerProps) {
   const [commentBody, setCommentBody] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [comments, setComments] = useState<GitHubComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  const { data: comments, isLoading: isLoadingComments, refetch: refetchComments } = trpc.github.getIssueComments.useQuery(
-    { issueNumber: issue?.number ?? 0 },
-    { enabled: isOpen && issue !== null && issue.number > 0 }
-  );
-
-  const createCommentMutation = trpc.github.createIssueComment.useMutation({
-    onSuccess: () => {
-      setCommentBody('');
-      refetchComments();
-    },
-    onError: (error) => {
-      console.error('Failed to create comment:', error);
-      alert('Failed to create comment. Please try again.');
-    },
-    onSettled: () => {
-      setIsSubmitting(false);
-    },
-  });
+  useEffect(() => {
+    if (isOpen && issue && issue.number > 0) {
+      async function fetchComments() {
+        if (!issue) return;
+        try {
+          setIsLoadingComments(true);
+          const fetchedComments = await getIssueComments(issue.number);
+          setComments(fetchedComments);
+        } catch (error) {
+          console.error('Failed to fetch comments:', error);
+          setComments([]);
+        } finally {
+          setIsLoadingComments(false);
+        }
+      }
+      fetchComments();
+    } else {
+      setComments([]);
+    }
+  }, [isOpen, issue]);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!issue || !commentBody.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    createCommentMutation.mutate({
-      issueNumber: issue.number,
-      body: commentBody.trim(),
-    });
+    try {
+      await createIssueComment(issue.number, commentBody.trim());
+      setCommentBody('');
+      // Refetch comments
+      if (issue) {
+        const fetchedComments = await getIssueComments(issue.number);
+        setComments(fetchedComments);
+      }
+    } catch (error) {
+      console.error('Failed to create comment:', error);
+      alert('Failed to create comment. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const description = issue ? extractDescription(issue.body || '') : '';
-  const issueComments: GitHubComment[] = comments || [];
+  const issueComments: GitHubComment[] = comments;
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>

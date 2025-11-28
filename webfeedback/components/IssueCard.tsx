@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import type { IssueWithMetadata } from '../lib/github';
+import { Card, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import type { IssueWithMetadata } from '../types';
 
 interface IssueCardProps {
   issue: IssueWithMetadata;

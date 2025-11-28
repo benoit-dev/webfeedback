@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { PageSection } from './PageSection';
-import { getConfig } from '../lib/config';
-import { getAllIssues, type IssueWithMetadata } from '../lib/github';
+import { PageSection } from '@/webfeedback/components/PageSection';
+import { getAllIssues } from '@/webfeedback/lib/api';
+import type { IssueWithMetadata } from '@/webfeedback/types';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -37,23 +37,14 @@ export function IssuesListPage({ configError, onViewOnPage, shouldRefetch, filte
       try {
         setLoading(true);
         setError(null);
-        const config = getConfig();
-        const allIssues = await getAllIssues(config);
+        const allIssues = await getAllIssues();
         setIssues(allIssues);
       } catch (err) {
         const errorMessage =
           err instanceof Error
             ? err.message
             : 'Failed to fetch issues. Please try again.';
-        
-        // Check if it's a configuration error
-        if (errorMessage.includes('not configured') || errorMessage.includes('Missing GitHub')) {
-          setError(
-            'GitHub configuration not found. Please set NEXT_PUBLIC_GITHUB_TOKEN, NEXT_PUBLIC_GITHUB_OWNER, and NEXT_PUBLIC_GITHUB_REPO in your .env.local file.'
-          );
-        } else {
-          setError(errorMessage);
-        }
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

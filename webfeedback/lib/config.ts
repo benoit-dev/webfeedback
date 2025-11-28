@@ -1,37 +1,31 @@
-import type { GitHubConfig } from '../types';
+export interface WebFeedbackConfig {
+  apiEndpoint?: string;
+}
 
-let config: GitHubConfig | null = null;
+let config: WebFeedbackConfig | null = null;
 
-export function setupConfig(newConfig: GitHubConfig) {
+export function setupConfig(newConfig: WebFeedbackConfig) {
   config = newConfig;
 }
 
-export function getConfig(): GitHubConfig {
-  if (!config) {
-    throw new Error(
-      'WebFeedback not configured. Call setupConfig() with your GitHub credentials.'
-    );
+export function getApiEndpoint(): string {
+  if (!config || !config.apiEndpoint) {
+    return '/api/webfeedback';
   }
-  return config;
+  return config.apiEndpoint;
 }
 
-// Helper to get config from environment variables
-export function getConfigFromEnv(): GitHubConfig {
-  const token = process.env.NEXT_PUBLIC_GITHUB_TOKEN;
-  const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER;
-  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO;
-
-  if (!token || !owner || !repo) {
+// Legacy functions kept for backward compatibility
+// These are no longer needed but kept to avoid breaking changes
+export function getConfig(): never {
     throw new Error(
-      'Missing GitHub configuration. Set NEXT_PUBLIC_GITHUB_TOKEN, NEXT_PUBLIC_GITHUB_OWNER, and NEXT_PUBLIC_GITHUB_REPO environment variables.'
+    'WebFeedback no longer uses client-side GitHub configuration. Use setupConfig({ apiEndpoint }) instead.'
     );
   }
 
-  return {
-    token,
-    owner,
-    repo,
-    labels: ['feedback', 'annotation'],
-  };
+export function getConfigFromEnv(): never {
+  throw new Error(
+    'WebFeedback no longer uses environment variables for client-side configuration. Use setupConfig({ apiEndpoint }) instead.'
+  );
 }
 

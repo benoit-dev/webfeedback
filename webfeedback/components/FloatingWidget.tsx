@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, FileText, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import type { AnnotationWithComments } from '../types';
-import type { IssueWithMetadata } from '../lib/github';
+import { Button } from './ui/button';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
+import { getIssueComments } from '../lib/api';
+import type { AnnotationWithComments, IssueWithMetadata } from '../types';
 import { AllIssuesModal } from './AllIssuesModal';
 import { IssueDetailDrawer } from './IssueDetailDrawer';
 import { AnnotationMarkers } from './AnnotationMarkers';
@@ -14,8 +14,6 @@ import { AnnotationForm } from './AnnotationForm';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useElementSelection } from '../hooks/useElementSelection';
 import { getAllMappings } from '../lib/storage';
-import { getConfig } from '../lib/config';
-import { getGitHubIssueComments } from '../lib/github';
 
 interface FloatingWidgetProps {
   className?: string;
@@ -174,22 +172,39 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
 
   const fetchIssueAndNavigate = async (issueNumber: number, mapping: any) => {
     try {
-      const config = getConfig();
+      // Fetch comments via API
+      const comments = await getIssueComments(issueNumber);
       
-      // Fetch issue and comments
-      const response = await fetch(
-        `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}`,
-        {
-          headers: {
-            'Authorization': `token ${config.token}`,
-            'Accept': 'application/vnd.github.v3+json',
-          },
-        }
+      // Try to find the full issue from annotations
+      const existingAnnotation = annotations.find(
+        (ann) => ann.issueNumber === issueNumber
       );
       
-      if (response.ok) {
-        const issue = await response.json();
-        const comments = await getGitHubIssueComments(config, issueNumber);
+      if (existingAnnotation) {
+        // Use the full issue data from the annotation
+        const annotation: AnnotationWithComments = {
+          ...existingAnnotation,
+          comments,
+          commentCount: comments.length,
+        };
+        handleIssueNavigation(annotation);
+      } else {
+        // We need to fetch the issue. Since we don't have a getIssue procedure,
+        // we'll try to get it from getAllIssues or construct a minimal one
+        // For now, create a minimal annotation - the issue data will be incomplete
+        // but this is a fallback scenario
+        const issue: IssueWithMetadata = {
+          id: issueNumber,
+          number: issueNumber,
+          title: 'Issue', // Will be replaced if we have full issue data
+          body: '',
+          state: 'open',
+          html_url: mapping.issueUrl,
+          created_at: mapping.createdAt,
+          labels: [],
+          parsedPageUrl: mapping.pageUrl,
+          parsedElementSelector: mapping.elementSelector,
+        };
         
         const annotation: AnnotationWithComments = {
           id: `${mapping.elementSelector}_${mapping.pageUrl}`,
@@ -198,7 +213,7 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
           issueNumber: mapping.issueNumber,
           issueUrl: mapping.issueUrl,
           createdAt: mapping.createdAt,
-          issue,
+          issue: issue as any, // Type assertion needed due to minimal issue object
           comments,
           commentCount: comments.length,
         };

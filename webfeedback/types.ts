@@ -43,3 +43,8 @@ export interface GitHubConfig {
   labels?: string[];
 }
 
+export interface IssueWithMetadata extends GitHubIssue {
+  parsedPageUrl: string | null;
+  parsedElementSelector: string | null;
+}
+

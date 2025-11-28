@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { IssueCard } from './IssueCard';
-import type { IssueWithMetadata } from '../lib/github';
+import type { IssueWithMetadata } from '../types';
 import { Globe } from 'lucide-react';
 
 interface PageSectionProps {

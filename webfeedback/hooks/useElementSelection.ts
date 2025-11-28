@@ -203,7 +203,7 @@ function generateSelector(element: HTMLElement): string {
     }
 
     // Add nth-of-type to make it specific
-    const parent = current.parentElement;
+    const parent: HTMLElement | null = current.parentElement;
     if (parent) {
       const siblings = Array.from(parent.children).filter(
         (el) => el.tagName === current!.tagName
@@ -261,7 +261,7 @@ function generateUniqueSelector(
   const maxDepth = 6;
 
   while (current && current !== document.body && depth < maxDepth) {
-    const parent = current.parentElement;
+    const parent: HTMLElement | null = current.parentElement;
     if (!parent) break;
 
     let selector = current.tagName.toLowerCase();

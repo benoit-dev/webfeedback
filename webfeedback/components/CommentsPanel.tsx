@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
 import { AnnotationList } from './AnnotationList';
 import { AnnotationForm } from './AnnotationForm';

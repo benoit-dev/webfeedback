@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { FloatingWidget, init } from '@/webfeedback';
+import { FloatingWidget, init } from 'webfeedback';
 
 export function WebFeedbackWidget() {
   useEffect(() => {
-    // Initialize with default API endpoint
+    // Initialize with your API endpoint
     init({ apiEndpoint: '/api/webfeedback' });
   }, []);
 

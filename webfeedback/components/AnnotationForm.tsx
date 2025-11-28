@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
 import { X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getConfig } from '../lib/config';
-import { createGitHubIssue } from '../lib/github';
+import { createIssue } from '../lib/api';
 import { saveAnnotationMapping } from '../lib/storage';
 
 interface AnnotationFormProps {
@@ -27,15 +26,14 @@ export function AnnotationForm({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [elementSelector, setElementSelector] = useState(initialElementSelector);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialElementSelector) {
       setElementSelector(initialElementSelector);
     }
   }, [initialElementSelector]);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +52,6 @@ export function AnnotationForm({
     setIsSubmitting(true);
 
     try {
-      const config = getConfig();
-      
       // Create issue body with annotation details
       const issueBody = `## Annotation Details
 
@@ -66,8 +62,8 @@ export function AnnotationForm({
 
 ${description || 'No additional description provided.'}`;
 
-      // Create GitHub issue
-      const issue = await createGitHubIssue(config, title, issueBody);
+      // Create GitHub issue via API
+      const issue = await createIssue(title.trim(), issueBody, ['feedback', 'annotation']);
 
       // Save mapping
       saveAnnotationMapping({

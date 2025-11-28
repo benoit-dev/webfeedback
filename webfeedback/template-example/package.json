@@ -1,0 +1,27 @@
+{
+  "name": "webfeedback-example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "setup:webfeedback": "node node_modules/webfeedback/scripts/setup.js http://localhost:3000"
+  },
+  "dependencies": {
+    "webfeedback": "git+https://github.com/yourusername/webfeedback.git#main:webfeedback",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4"
+  }
+}
+

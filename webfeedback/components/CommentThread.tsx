@@ -1,6 +1,6 @@
 'use client';
 
-import { Label } from '@/components/ui/label';
+import { Label } from './ui/label';
 import type { AnnotationWithComments } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 
