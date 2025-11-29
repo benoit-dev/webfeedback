@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
@@ -28,6 +29,9 @@ export function AllIssuesModal({ isOpen, onClose }: AllIssuesModalProps) {
         <DialogContent className="max-w-6xl w-full h-[90vh] p-0 flex flex-col">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle className="text-2xl font-bold mb-4">All Issues</DialogTitle>
+            <DialogDescription className="sr-only">
+              View and manage all feedback issues for this page
+            </DialogDescription>
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'open' | 'ready-for-review')}>
               <TabsList>
                 <TabsTrigger value="open">Open</TabsTrigger>

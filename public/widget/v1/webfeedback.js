@@ -18450,6 +18450,7 @@ For more information, see https://radix-ui.com/primitives/docs/components/${titl
   var Overlay = DialogOverlay;
   var Content = DialogContent;
   var Title = DialogTitle;
+  var Description = DialogDescription;
   var Close = DialogClose;
 
   // webfeedback/components/ui/dialog.tsx
@@ -18540,6 +18541,20 @@ For more information, see https://radix-ui.com/primitives/docs/components/${titl
       __spreadValues({
         "data-slot": "dialog-title",
         className: cn("text-lg leading-none font-semibold", className)
+      }, props)
+    );
+  }
+  function DialogDescription2(_a) {
+    var _b = _a, {
+      className
+    } = _b, props = __objRest(_b, [
+      "className"
+    ]);
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+      Description,
+      __spreadValues({
+        "data-slot": "dialog-description",
+        className: cn("text-muted-foreground text-sm", className)
       }, props)
     );
   }
@@ -20796,6 +20811,7 @@ For more information, see https://radix-ui.com/primitives/docs/components/${titl
       /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(Dialog2, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(DialogContent2, { className: "max-w-6xl w-full h-[90vh] p-0 flex flex-col", children: [
         /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(DialogHeader, { className: "px-6 pt-6 pb-4 border-b", children: [
           /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(DialogTitle2, { className: "text-2xl font-bold mb-4", children: "All Issues" }),
+          /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(DialogDescription2, { className: "sr-only", children: "View and manage all feedback issues for this page" }),
           /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(Tabs2, { value: activeTab, onValueChange: (value) => setActiveTab(value), children: /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(TabsList2, { children: [
             /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(TabsTrigger2, { value: "open", children: "Open" }),
             /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(TabsTrigger2, { value: "ready-for-review", children: "Ready for Review" })
