@@ -165,3 +165,99 @@
   border-color: var(--border, rgba(255, 255, 255, 0.1)) !important;
 }
 
+/* Button styles - ensure buttons within widget and dialog display correctly */
+[data-webfeedback] button,
+[data-webfeedback="dialog"] button,
+[data-webfeedback="widget"] button,
+[data-webfeedback] [data-slot="button"],
+[data-webfeedback="dialog"] [data-slot="button"],
+[data-webfeedback="widget"] [data-slot="button"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+/* Primary button (default variant) - black background with white text */
+/* Target buttons with bg-primary class explicitly */
+[data-webfeedback] button.bg-primary,
+[data-webfeedback="dialog"] button.bg-primary,
+[data-webfeedback="widget"] button.bg-primary,
+[data-webfeedback] [data-slot="button"].bg-primary,
+[data-webfeedback="dialog"] [data-slot="button"].bg-primary {
+  background-color: var(--primary, #000000) !important;
+  color: var(--primary-foreground, #ffffff) !important;
+}
+
+[data-webfeedback] button.bg-primary:hover,
+[data-webfeedback="dialog"] button.bg-primary:hover,
+[data-webfeedback="widget"] button.bg-primary:hover,
+[data-webfeedback] [data-slot="button"].bg-primary:hover,
+[data-webfeedback="dialog"] [data-slot="button"].bg-primary:hover {
+  background-color: var(--primary, #000000) !important;
+  opacity: 0.9 !important;
+}
+
+/* Also target buttons that use text-primary-foreground (indicating primary variant) */
+[data-webfeedback] [data-slot="button"].text-primary-foreground,
+[data-webfeedback="dialog"] [data-slot="button"].text-primary-foreground {
+  background-color: var(--primary, #000000) !important;
+  color: var(--primary-foreground, #ffffff) !important;
+}
+
+/* Target submit buttons in forms within dialog (likely primary actions) */
+[data-webfeedback="dialog"] form button[type="submit"]:not(.bg-background):not(.bg-secondary):not(.bg-destructive),
+[data-webfeedback="dialog"] form [data-slot="button"][type="submit"]:not(.bg-background):not(.bg-secondary):not(.bg-destructive) {
+  background-color: var(--primary, #000000) !important;
+  color: var(--primary-foreground, #ffffff) !important;
+}
+
+/* Outline button variant */
+[data-webfeedback] button.bg-background,
+[data-webfeedback="dialog"] button.bg-background,
+[data-webfeedback="widget"] button.bg-background,
+[data-webfeedback] [data-slot="button"].bg-background,
+[data-webfeedback="dialog"] [data-slot="button"].bg-background {
+  background-color: var(--background, #ffffff) !important;
+  color: var(--foreground, #000000) !important;
+  border: 1px solid var(--border, #e5e7eb) !important;
+}
+
+/* Secondary button variant */
+[data-webfeedback] button.bg-secondary,
+[data-webfeedback="dialog"] button.bg-secondary,
+[data-webfeedback="widget"] button.bg-secondary {
+  background-color: var(--secondary, #f5f5f5) !important;
+  color: var(--secondary-foreground, #000000) !important;
+}
+
+/* Ghost button variant */
+[data-webfeedback] button:has(.hover\:bg-accent),
+[data-webfeedback="dialog"] button:has(.hover\:bg-accent) {
+  background-color: transparent !important;
+}
+
+/* Ensure text colors are applied correctly */
+[data-webfeedback] button.text-primary-foreground,
+[data-webfeedback="dialog"] button.text-primary-foreground,
+[data-webfeedback="widget"] button.text-primary-foreground {
+  color: var(--primary-foreground, #ffffff) !important;
+}
+
+[data-webfeedback] button.text-foreground,
+[data-webfeedback="dialog"] button.text-foreground {
+  color: var(--foreground, #000000) !important;
+}
+
+/* Dark mode button support */
+[data-webfeedback].dark button.bg-primary,
+[data-webfeedback] .dark button.bg-primary,
+[data-webfeedback].dark [data-webfeedback="dialog"] button.bg-primary,
+[data-webfeedback] .dark [data-webfeedback="dialog"] button.bg-primary {
+  background-color: var(--primary, #ebebeb) !important;
+  color: var(--primary-foreground, #000000) !important;
+}
+
