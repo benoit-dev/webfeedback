@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebFeedback Widget - Embed Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+    }
+    .code-block {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    code {
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebFeedback Widget Embed Example</h1>
+  
+  <p>This page demonstrates how to embed the WebFeedback widget using a script tag.</p>
+  
+  <h2>How to Embed</h2>
+  
+  <p>Add this script tag to your HTML, replacing <code>YOUR_API_KEY</code> with your actual API key:</p>
+  
+  <div class="code-block">
+    <code>&lt;script src="https://yourdomain.com/widget/v1/loader.js?key=YOUR_API_KEY"&gt;&lt;/script&gt;</code>
+  </div>
+  
+  <h2>Example with API Key</h2>
+  
+  <div class="code-block">
+    <code>&lt;script src="https://yourdomain.com/widget/v1/loader.js?key=wf_abc123xyz"&gt;&lt;/script&gt;</code>
+  </div>
+  
+  <div class="note">
+    <strong>Note:</strong> Replace <code>https://yourdomain.com</code> with your actual domain where the widget is hosted.
+  </div>
+  
+  <h2>Getting Your API Key</h2>
+  
+  <p>To get an API key:</p>
+  <ol>
+    <li>Go to the admin dashboard</li>
+    <li>Create a new customer/project</li>
+    <li>Enter your GitHub credentials (token, owner, repo)</li>
+    <li>Add allowed domains (e.g., example.com, www.example.com)</li>
+    <li>Copy the generated API key and script tag</li>
+  </ol>
+  
+  <h2>Domain Whitelisting</h2>
+  
+  <p>For security, you must whitelist the domains where the widget will be used. Only requests from whitelisted domains will be accepted.</p>
+  
+  <p>When creating a customer, specify allowed domains like:</p>
+  <ul>
+    <li><code>example.com</code></li>
+    <li><code>www.example.com</code></li>
+    <li><code>app.example.com</code></li>
+  </ul>
+  
+  <h2>Troubleshooting</h2>
+  
+  <ul>
+    <li><strong>Widget not loading:</strong> Check that your API key is correct and the domain is whitelisted</li>
+    <li><strong>403 Forbidden:</strong> Your domain is not in the allowed domains list</li>
+    <li><strong>401 Unauthorized:</strong> Invalid or inactive API key</li>
+    <li><strong>Console errors:</strong> Check browser console for detailed error messages</li>
+  </ul>
+  
+  <hr>
+  
+  <p><em>This is a test page. The widget should appear in the bottom-right corner once loaded.</em></p>
+  
+  <!-- Replace with your actual API key -->
+  <script src="/widget/v1/loader.js?key=YOUR_API_KEY"></script>
+</body>
+</html>
+

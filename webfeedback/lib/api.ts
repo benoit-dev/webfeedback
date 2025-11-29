@@ -1,6 +1,6 @@
 import type { GitHubIssue, GitHubComment, AnnotationWithComments, IssueWithMetadata } from '../types';
 import type { AnnotationMapping } from './storage';
-import { getApiEndpoint } from './config';
+import { getApiEndpoint, getApiKey } from './config';
 
 /**
  * API client for WebFeedback widget
@@ -12,12 +12,20 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const apiEndpoint = getApiEndpoint();
-  const url = `${apiEndpoint}${endpoint}`;
+  const apiKey = getApiKey();
+  
+  // Build URL with API key if provided
+  let url = `${apiEndpoint}${endpoint}`;
+  if (apiKey) {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    url = `${url}${separator}key=${encodeURIComponent(apiKey)}`;
+  }
   
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(apiKey ? { 'X-API-Key': apiKey } : {}),
       ...options.headers,
     },
   });

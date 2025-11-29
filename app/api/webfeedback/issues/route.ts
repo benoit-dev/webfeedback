@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getGitHubConfigFromRequest } from '@/lib/widget/api-helpers';
+import { getCorsHeaders } from '@/lib/widget/cors';
+import { extractOriginFromHeaders } from '@/lib/widget/domain-validation';
 
 // Helper function to normalize URL to pathname + search for comparison
 function normalizeUrlForComparison(url: string): string {
@@ -14,25 +17,11 @@ function normalizeUrlForComparison(url: string): string {
   }
 }
 
-// Helper to get GitHub config from environment variables
-function getGitHubConfig() {
-  const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER;
-  const repo = process.env.GITHUB_REPO;
-
-  if (!token || !owner || !repo) {
-    throw new Error(
-      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
-    );
-  }
-
-  return { token, owner, repo };
-}
-
 export async function POST(request: Request) {
+  const requestOrigin = extractOriginFromHeaders(request.headers);
   try {
     const body = await request.json();
-    const config = getGitHubConfig();
+    const config = await getGitHubConfigFromRequest(request);
     
     const response = await fetch(
       `https://api.github.com/repos/${config.owner}/${config.repo}/issues`,
@@ -55,20 +44,29 @@ export async function POST(request: Request) {
       const error = await response.text();
       return NextResponse.json(
         { error: 'Failed to create issue', details: error },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
-    return NextResponse.json(await response.json());
+    return NextResponse.json(await response.json(), {
+      headers: getCorsHeaders(requestOrigin)
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(requestOrigin)
+      }
     );
   }
 }
 
 export async function GET(request: Request) {
+  const requestOrigin = extractOriginFromHeaders(request.headers);
   try {
     const { searchParams } = new URL(request.url);
     const pageUrl = searchParams.get('pageUrl');
@@ -76,11 +74,14 @@ export async function GET(request: Request) {
     if (!pageUrl) {
       return NextResponse.json(
         { error: 'pageUrl parameter is required' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
-    const config = getGitHubConfig();
+    const config = await getGitHubConfigFromRequest(request);
     const labels = ['feedback'].join(',');
     const response = await fetch(
       `https://api.github.com/repos/${config.owner}/${config.repo}/issues?labels=${labels}&state=open`,
@@ -96,7 +97,10 @@ export async function GET(request: Request) {
       const error = await response.text();
       return NextResponse.json(
         { error: 'Failed to fetch issues', details: error },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
@@ -130,11 +134,28 @@ export async function GET(request: Request) {
       return false;
     });
     
-    return NextResponse.json(filteredIssues);
+    return NextResponse.json(filteredIssues, {
+      headers: getCorsHeaders(requestOrigin)
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(requestOrigin)
+      }
     );
   }
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+    },
+  });
 }

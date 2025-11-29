@@ -1,5 +1,6 @@
 export interface WebFeedbackConfig {
   apiEndpoint?: string;
+  apiKey?: string;
 }
 
 let config: WebFeedbackConfig | null = null;
@@ -13,6 +14,25 @@ export function getApiEndpoint(): string {
     return '/api/webfeedback';
   }
   return config.apiEndpoint;
+}
+
+export function getApiKey(): string | undefined {
+  return config?.apiKey;
+}
+
+// Initialize from global config (set by loader script)
+export function initFromGlobalConfig() {
+  if (typeof window !== 'undefined') {
+    const globalConfig = (window as any).__WebFeedbackConfig;
+    const globalApiKey = (window as any).__WebFeedbackApiKey;
+    
+    if (globalConfig || globalApiKey) {
+      setupConfig({
+        apiEndpoint: globalConfig?.apiEndpoint || '/api/webfeedback',
+        apiKey: globalApiKey,
+      });
+    }
+  }
 }
 
 // Legacy functions kept for backward compatibility

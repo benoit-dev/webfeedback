@@ -12,7 +12,26 @@ A reusable React widget for collecting web page annotations and syncing them wit
 - 📦 **Self-Contained**: All UI components bundled - no need to install ShadCN separately
 - 🚀 **Easy Setup**: Automated setup script generates API routes
 
-## Quick Start (Using the Widget in Your Project)
+## Quick Start
+
+### Option 1: Script Tag Embedding (Recommended)
+
+The easiest way to add the widget to any website is using a script tag:
+
+```html
+<script src="https://yourdomain.com/widget/v1/loader.js?key=wf_abc123xyz"></script>
+```
+
+**Steps:**
+1. Create a customer/project in the admin dashboard
+2. Enter your GitHub credentials (token, owner, repo)
+3. Add allowed domains (for security)
+4. Copy the generated script tag
+5. Add it to your HTML
+
+See **[docs/script-embedding.md](./docs/script-embedding.md)** for complete documentation.
+
+### Option 2: Install as Package
 
 ### 1. Install the Package
 
@@ -89,7 +108,8 @@ export default function RootLayout({ children }) {
 
 ## 📚 Complete Documentation
 
-- **[webfeedback/SETUP_GUIDE.md](./webfeedback/SETUP_GUIDE.md)** - Detailed setup instructions
+- **[docs/script-embedding.md](./docs/script-embedding.md)** - Script tag embedding guide (recommended)
+- **[webfeedback/SETUP_GUIDE.md](./webfeedback/SETUP_GUIDE.md)** - Package installation setup
 - **[webfeedback/README.md](./webfeedback/README.md)** - Widget package documentation
 - **[webfeedback/template-example/](./webfeedback/template-example/)** - Complete example project
 

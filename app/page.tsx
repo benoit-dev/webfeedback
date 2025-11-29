@@ -19,6 +19,9 @@ export default function Home() {
             <Link href="/contact" className="text-sm hover:underline">
               Contact
             </Link>
+            <Link href="/widget/create" className="text-sm hover:underline">
+              Create Widget
+            </Link>
           </div>
         </div>
       </nav>

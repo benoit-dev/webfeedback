@@ -19,7 +19,11 @@ export function IssueCard({ issue, onViewOnPage, onOpenDrawer }: IssueCardProps)
     } else if (issue.parsedPageUrl) {
       // Fallback to navigation if no drawer handler
       console.log('No drawer handler, navigating to page');
-      const targetUrl = new URL(issue.parsedPageUrl);
+      // Use the current origin (customer's app) + the parsed page URL path
+      const pagePath = issue.parsedPageUrl.startsWith('/') 
+        ? issue.parsedPageUrl 
+        : `/${issue.parsedPageUrl}`;
+      const targetUrl = new URL(pagePath, window.location.origin);
       targetUrl.searchParams.set('issue', issue.number.toString());
       
       if (onViewOnPage) {
@@ -33,7 +37,11 @@ export function IssueCard({ issue, onViewOnPage, onOpenDrawer }: IssueCardProps)
   const handleViewOnPage = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (issue.parsedPageUrl) {
-      const targetUrl = new URL(issue.parsedPageUrl);
+      // Use the current origin (customer's app) + the parsed page URL path
+      const pagePath = issue.parsedPageUrl.startsWith('/') 
+        ? issue.parsedPageUrl 
+        : `/${issue.parsedPageUrl}`;
+      const targetUrl = new URL(pagePath, window.location.origin);
       targetUrl.searchParams.set('issue', issue.number.toString());
       
       if (onViewOnPage) {

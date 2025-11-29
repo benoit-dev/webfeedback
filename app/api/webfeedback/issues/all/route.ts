@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getGitHubConfigFromRequest } from '@/lib/widget/api-helpers';
+import { getCorsHeaders } from '@/lib/widget/cors';
+import { extractOriginFromHeaders } from '@/lib/widget/domain-validation';
 
 // Parse page URL and element selector from GitHub issue body
 function parseIssueBody(body: string) {
@@ -24,24 +27,22 @@ function parseIssueBody(body: string) {
   return result;
 }
 
-// Helper to get GitHub config from environment variables
-function getGitHubConfig() {
-  const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER;
-  const repo = process.env.GITHUB_REPO;
-
-  if (!token || !owner || !repo) {
-    throw new Error(
-      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
-    );
-  }
-
-  return { token, owner, repo };
-}
-
-export async function GET() {
+export async function GET(request: Request) {
+  const requestOrigin = extractOriginFromHeaders(request.headers);
   try {
-    const config = getGitHubConfig();
+    let config;
+    try {
+      config = await getGitHubConfigFromRequest(request);
+    } catch (error) {
+      console.error('Error getting GitHub config:', error);
+      return NextResponse.json(
+        { error: 'Failed to get GitHub config', details: error instanceof Error ? error.message : String(error) },
+        { 
+          status: 500,
+          headers: getCorsHeaders(requestOrigin)
+        }
+      );
+    }
     const labels = ['feedback'].join(',');
     const response = await fetch(
       `https://api.github.com/repos/${config.owner}/${config.repo}/issues?labels=${labels}&state=open&per_page=100`,
@@ -57,7 +58,10 @@ export async function GET() {
       const error = await response.text();
       return NextResponse.json(
         { error: 'Failed to fetch issues', details: error },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
@@ -73,11 +77,28 @@ export async function GET() {
       };
     });
     
-    return NextResponse.json(issuesWithMetadata);
+    return NextResponse.json(issuesWithMetadata, {
+      headers: getCorsHeaders(requestOrigin)
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(requestOrigin)
+      }
     );
   }
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+    },
+  });
 }

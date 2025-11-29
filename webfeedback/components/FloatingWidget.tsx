@@ -32,21 +32,11 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
   const wasAnyOpenRef = useRef(false);
 
   // Helper function to normalize URL to pathname + search (without origin)
+  // For the widget, we only need the relative path since it's embedded on the customer's site
   const normalizePageUrl = (): string => {
     const pathname = window.location.pathname;
     const search = window.location.search;
-    const normalizedPath = pathname + search;
-    
-    // Prepend NEXT_PUBLIC_URL if available
-    const baseUrl = process.env.NEXT_PUBLIC_URL;
-    if (baseUrl) {
-      // Ensure baseUrl doesn't end with / and path starts with /
-      const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-      const cleanPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
-      return `${cleanBaseUrl}${cleanPath}`;
-    }
-    
-    return normalizedPath;
+    return pathname + search;
   };
 
   useEffect(() => {
@@ -277,12 +267,35 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
   return (
     <div data-webfeedback="root">
       <div
-        className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3 ${className || ''}`}
-        style={{ position: 'fixed' }}
+        className={`flex flex-col gap-3 ${className || ''}`}
+        style={{ 
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          left: 'auto',
+          top: 'auto',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}
         data-webfeedback="widget"
       >
         {/* Actions Container */}
-        <div className="flex flex-row items-center bg-background rounded-lg p-1.5 shadow-lg border gap-2">
+        <div 
+          className="flex flex-row items-center bg-background rounded-lg p-1.5 shadow-lg border gap-2"
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px',
+            borderRadius: '8px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            border: '1px solid var(--border, #e5e7eb)',
+            backgroundColor: 'var(--background, #ffffff)'
+          }}
+        >
           {/* Comment/Add Annotation Button */}
           <Button
             onClick={handleWidgetClick}
@@ -291,12 +304,51 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
             className={`h-10 w-10 hover:bg-muted transition-all relative ${
               isSelecting ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''
             }`}
+            style={{
+              position: 'relative',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
             title={isSelecting ? 'Cancel selection' : 'Add annotation'}
           >
-            <MessageSquare className="h-4 w-4" />
-            <Plus className={`h-2.5 w-2.5 absolute -top-0.5 -right-0.5 rounded-full p-0.5 stroke-[3] ${
-              isSelecting ? 'bg-white text-blue-500' : 'bg-primary text-primary-foreground'
-            }`} />
+            <MessageSquare 
+              className="h-4 w-4" 
+              style={{
+                width: '16px',
+                height: '16px',
+                display: 'block'
+              }}
+            />
+            <span
+              style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '-2px',
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: isSelecting ? 'white' : 'var(--primary, #000000)',
+                padding: '2px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <Plus 
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  stroke: isSelecting ? '#3b82f6' : 'var(--primary-foreground, #ffffff)',
+                  strokeWidth: '2.5',
+                  fill: 'none',
+                  display: 'block'
+                }}
+              />
+            </span>
           </Button>
 
           {/* All Issues Button */}
@@ -305,21 +357,79 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
             size="icon"
             variant="ghost"
             className="h-10 w-10 hover:bg-muted transition-all"
+            style={{
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
             title="View all issues"
           >
-            <FileText className="h-4 w-4" />
+            <FileText 
+              className="h-4 w-4"
+              style={{
+                width: '16px',
+                height: '16px',
+                display: 'block'
+              }}
+            />
           </Button>
 
           {/* Show Comments Toggle */}
-          <div className="flex items-center gap-2 px-1">
-            <Switch
-              id="show-comments"
-              checked={showComments}
-              onCheckedChange={setShowComments}
-            />
+          <div 
+            className="flex items-center gap-2 px-1"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              paddingLeft: '4px',
+              paddingRight: '4px'
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                height: '20px',
+                width: '36px',
+                flexShrink: 0,
+                cursor: 'pointer',
+                alignItems: 'center',
+                borderRadius: '9999px',
+                border: '2px solid transparent',
+                transition: 'background-color 0.2s',
+                backgroundColor: showComments 
+                  ? 'var(--primary, #000000)' 
+                  : 'var(--input, #e5e7eb)',
+                position: 'relative'
+              }}
+              onClick={() => setShowComments(!showComments)}
+            >
+              <span
+                style={{
+                  pointerEvents: 'none',
+                  display: 'block',
+                  height: '16px',
+                  width: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--background, #ffffff)',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                  transition: 'transform 0.2s',
+                  transform: showComments ? 'translateX(16px)' : 'translateX(0)'
+                }}
+              />
+            </div>
             <Label
               htmlFor="show-comments"
               className="text-xs cursor-pointer text-muted-foreground whitespace-nowrap"
+              style={{
+                fontSize: '12px',
+                cursor: 'pointer',
+                color: 'var(--muted-foreground, #6b7280)',
+                whiteSpace: 'nowrap',
+                userSelect: 'none'
+              }}
+              onClick={() => setShowComments(!showComments)}
             >
               Show comments
             </Label>

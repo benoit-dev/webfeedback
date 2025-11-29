@@ -1,24 +1,13 @@
 import { NextResponse } from 'next/server';
-
-// Helper to get GitHub config from environment variables
-function getGitHubConfig() {
-  const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER;
-  const repo = process.env.GITHUB_REPO;
-
-  if (!token || !owner || !repo) {
-    throw new Error(
-      'Missing GitHub configuration. Set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.'
-    );
-  }
-
-  return { token, owner, repo };
-}
+import { getGitHubConfigFromRequest } from '@/lib/widget/api-helpers';
+import { getCorsHeaders } from '@/lib/widget/cors';
+import { extractOriginFromHeaders } from '@/lib/widget/domain-validation';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestOrigin = extractOriginFromHeaders(request.headers);
   try {
     const { id } = await params;
     const issueNumber = parseInt(id);
@@ -26,11 +15,14 @@ export async function GET(
     if (isNaN(issueNumber)) {
       return NextResponse.json(
         { error: 'Invalid issue number' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
-    const config = getGitHubConfig();
+    const config = await getGitHubConfigFromRequest(request);
     const response = await fetch(
       `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/comments`,
       {
@@ -45,15 +37,23 @@ export async function GET(
       const error = await response.text();
       return NextResponse.json(
         { error: 'Failed to fetch comments', details: error },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
-    return NextResponse.json(await response.json());
+    return NextResponse.json(await response.json(), {
+      headers: getCorsHeaders(requestOrigin)
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(requestOrigin)
+      }
     );
   }
 }
@@ -62,6 +62,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestOrigin = extractOriginFromHeaders(request.headers);
   try {
     const { id } = await params;
     const issueNumber = parseInt(id);
@@ -70,18 +71,24 @@ export async function POST(
     if (isNaN(issueNumber)) {
       return NextResponse.json(
         { error: 'Invalid issue number' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
     if (!body.body) {
       return NextResponse.json(
         { error: 'Comment body is required' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
-    const config = getGitHubConfig();
+    const config = await getGitHubConfigFromRequest(request);
     const response = await fetch(
       `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/comments`,
       {
@@ -101,15 +108,35 @@ export async function POST(
       const error = await response.text();
       return NextResponse.json(
         { error: 'Failed to create comment', details: error },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: getCorsHeaders(requestOrigin)
+        }
       );
     }
     
-    return NextResponse.json(await response.json());
+    return NextResponse.json(await response.json(), {
+      headers: getCorsHeaders(requestOrigin)
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(requestOrigin)
+      }
     );
   }
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+    },
+  });
 }
