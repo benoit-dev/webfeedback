@@ -122,3 +122,46 @@
   align-items: center !important;
 }
 
+/* Dialog overlay - ensure proper background and z-index */
+[data-webfeedback="overlay"] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 50 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Dialog content - ensure proper background, positioning, and styling */
+[data-webfeedback="dialog"] {
+  background-color: var(--background, #ffffff) !important;
+  color: var(--foreground, #000000) !important;
+  position: fixed !important;
+  z-index: 50 !important;
+  border: 1px solid var(--border, #e5e7eb) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  padding: 1.5rem !important;
+  margin: 0 !important;
+  /* Prevent inheritance of problematic styles */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure dialog content and children use proper box-sizing */
+[data-webfeedback="dialog"] *,
+[data-webfeedback="dialog"] *::before,
+[data-webfeedback="dialog"] *::after {
+  box-sizing: border-box !important;
+}
+
+/* Dark mode support for dialog */
+[data-webfeedback].dark [data-webfeedback="dialog"],
+[data-webfeedback] .dark [data-webfeedback="dialog"] {
+  background-color: var(--background, #1a1a1a) !important;
+  color: var(--foreground, #ffffff) !important;
+  border-color: var(--border, rgba(255, 255, 255, 0.1)) !important;
+}
+
