@@ -412,7 +412,7 @@ export const appRouter = router({
             githubOwner: z.string().min(1, 'GitHub owner is required'),
             githubRepo: z.string().min(1, 'GitHub repo is required'),
             allowedDomains: z.array(z.string()).min(1, 'At least one domain is required'),
-            config: z.record(z.unknown()).optional(),
+            config: z.record(z.string(), z.unknown()).optional(),
           })
         )
         .mutation(async ({ input }) => {
@@ -460,7 +460,7 @@ export const appRouter = router({
 
           // Generate script tag HTML
           const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://yourdomain.com';
-          const scriptTag = `<script src="${baseUrl}/widget/v1/loader.js?key=${apiKey}"></script>`;
+          const scriptTag = `<script src="${baseUrl}/widget/v1/loader.js?key=${customer.apiKey}"></script>`;
 
           return {
             id: customer.id,
@@ -520,7 +520,7 @@ export const appRouter = router({
             githubOwner: z.string().optional(),
             githubRepo: z.string().optional(),
             allowedDomains: z.array(z.string()).optional(),
-            config: z.record(z.unknown()).optional(),
+            config: z.record(z.string(), z.unknown()).optional(),
             isActive: z.boolean().optional(),
           })
         )
