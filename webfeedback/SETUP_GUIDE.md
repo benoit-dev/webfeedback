@@ -48,19 +48,11 @@ This will create API routes that call the GitHub API directly:
 - `app/api/webfeedback/issues/[id]/comments/route.ts`
 - `app/api/webfeedback/annotations/route.ts`
 
-**Note:** The generated routes call the GitHub API directly using your environment variables. No proxy server needed!
+### 3. Create a Widget Customer
 
-### 3. Configure Environment Variables
-
-Create a `.env.local` file in your project root:
-
-```env
-GITHUB_TOKEN=your_github_personal_access_token
-GITHUB_OWNER=your_github_username_or_org
-GITHUB_REPO=your_repository_name
-```
-
-**Important:** These are server-side only (no `NEXT_PUBLIC_` prefix). The GitHub token is never exposed to the client browser.
+1. Go to `/widget/create` in your application
+2. Enter your GitHub credentials and allowed domains
+3. Copy the generated API key
 
 ### 4. Add CSS Styles
 
@@ -74,7 +66,7 @@ The widget uses scoped CSS variables that won't conflict with your project's sty
 
 ### 5. Initialize and Render the Widget
 
-In your root layout (`app/layout.tsx`):
+Update your widget initialization to include the API key. In your root layout (`app/layout.tsx`):
 
 ```tsx
 'use client';
@@ -88,8 +80,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   useEffect(() => {
-    // Initialize with your API endpoint
-    init({ apiEndpoint: '/api/webfeedback' });
+    // Initialize with your API endpoint and API key
+    init({ 
+      apiEndpoint: '/api/webfeedback',
+      apiKey: 'wf_your_api_key_here' // Get this from /widget/create
+    });
   }, []);
 
   return (
@@ -114,7 +109,10 @@ import { FloatingWidget, init } from 'webfeedback';
 
 export function WebFeedbackWidget() {
   useEffect(() => {
-    init({ apiEndpoint: '/api/webfeedback' });
+    init({ 
+      apiEndpoint: '/api/webfeedback',
+      apiKey: 'wf_your_api_key_here' // Get this from /widget/create
+    });
   }, []);
 
   return <FloatingWidget />;

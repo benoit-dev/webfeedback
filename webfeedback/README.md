@@ -32,27 +32,13 @@ Then install:
 pnpm install
 ```
 
-### 2. Run Setup Script
+### 2. Create a Widget Customer
 
-Generate all API routes automatically (they'll call GitHub API directly):
+1. Go to `/widget/create` in your application
+2. Enter your GitHub credentials and allowed domains
+3. Copy the generated API key
 
-```bash
-node node_modules/webfeedback/scripts/setup.js
-```
-
-This creates API routes that call GitHub directly - no proxy server needed!
-
-### 3. Configure Environment Variables
-
-Create `.env.local`:
-
-```env
-GITHUB_TOKEN=your_github_personal_access_token
-GITHUB_OWNER=your_github_username_or_org
-GITHUB_REPO=your_repository_name
-```
-
-### 4. Add CSS Styles
+### 3. Add CSS Styles
 
 Import the widget's CSS file in your global CSS (e.g., `app/globals.css`):
 
@@ -62,7 +48,7 @@ Import the widget's CSS file in your global CSS (e.g., `app/globals.css`):
 
 **Note:** The widget uses scoped CSS variables that won't conflict with your project's styles. The CSS variables are automatically scoped to the widget components.
 
-### 5. Initialize Widget
+### 4. Initialize Widget
 
 ```tsx
 // app/layout.tsx
@@ -72,7 +58,10 @@ import { FloatingWidget, init } from 'webfeedback';
 
 export default function RootLayout({ children }) {
   useEffect(() => {
-    init({ apiEndpoint: '/api/webfeedback' });
+    init({ 
+      apiEndpoint: '/api/webfeedback',
+      apiKey: 'wf_your_api_key_here' // Get this from /widget/create
+    });
   }, []);
 
   return (
@@ -93,7 +82,6 @@ For detailed setup instructions, see **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**.
 ## 📦 What's Included
 
 - ✅ All UI components (Button, Dialog, Sheet, Card, etc.) - **no ShadCN setup needed!**
-- ✅ Setup script to generate API routes automatically
 - ✅ TypeScript types
 - ✅ Example template project
 - ✅ Comprehensive documentation
@@ -108,12 +96,13 @@ pnpm update webfeedback
 
 ## How It Works
 
-1. **Widget** makes API calls to your API routes (`/api/webfeedback/*`)
-2. **Your API Routes** call GitHub API directly using environment variables
-3. **GitHub API** responds with issue data
-4. **Response** flows back to the widget
+1. **Widget** makes API calls with API key to `/api/webfeedback/*`
+2. **API Server** validates API key and looks up GitHub credentials from database
+3. **API Server** calls GitHub API using stored credentials
+4. **GitHub API** responds with issue data
+5. **Response** flows back to the widget
 
-This architecture keeps your GitHub credentials secure on your server (in environment variables) while allowing the widget to work from any website.
+This architecture keeps GitHub credentials secure in the database and supports multiple customers with different GitHub repos.
 
 ## Usage
 

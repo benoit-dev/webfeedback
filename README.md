@@ -10,7 +10,7 @@ A reusable React widget for collecting web page annotations and syncing them wit
 - 📍 **Visual Markers**: Shows annotation markers on annotated elements
 - 🎨 **Beautiful UI**: Built with bundled ShadCN UI components (no setup required!)
 - 📦 **Self-Contained**: All UI components bundled - no need to install ShadCN separately
-- 🚀 **Easy Setup**: Automated setup script generates API routes
+- 🚀 **Easy Setup**: API key-based system, no environment variables needed
 
 ## Quick Start
 
@@ -52,24 +52,39 @@ pnpm install
 # or npm install / yarn install
 ```
 
-### 2. Run Setup Script
+### 2. Create a Widget Customer
 
-Generate all API routes automatically (they'll call GitHub API directly):
+1. Go to `/widget/create` in your application
+2. Enter your GitHub credentials and allowed domains
+3. Copy the generated API key
 
-```bash
-node node_modules/webfeedback/scripts/setup.js
-```
+### 3. Initialize Widget with API Key
 
-This creates API routes that call GitHub directly - no proxy server needed!
+Update your widget initialization to include the API key:
 
-### 3. Configure Environment Variables
+```tsx
+// app/layout.tsx
+'use client';
+import { useEffect } from 'react';
+import { FloatingWidget, init } from 'webfeedback';
 
-Create `.env.local`:
+export default function RootLayout({ children }) {
+  useEffect(() => {
+    init({ 
+      apiEndpoint: '/api/webfeedback',
+      apiKey: 'wf_your_api_key_here' // Get this from /widget/create
+    });
+  }, []);
 
-```env
-GITHUB_TOKEN=your_github_personal_access_token
-GITHUB_OWNER=your_github_username_or_org
-GITHUB_REPO=your_repository_name
+  return (
+    <html>
+      <body>
+        {children}
+        <FloatingWidget />
+      </body>
+    </html>
+  );
+}
 ```
 
 ### 4. Add CSS Styles
@@ -123,19 +138,24 @@ This repository also includes a demo application:
 pnpm install
 ```
 
-### 2. Configure GitHub
+### 2. Create a Widget Customer
 
-Create a `.env.local` file:
+1. Go to `/widget/create`
+2. Enter your GitHub credentials and allowed domains
+3. Copy the generated API key
 
-```env
-GITHUB_TOKEN=your_github_personal_access_token
-GITHUB_OWNER=your_github_username_or_org
-GITHUB_REPO=your_repository_name
+### 3. Configure the Demo Widget
+
+Update `app/webfeedback-wrapper.tsx` to include your API key:
+
+```tsx
+init({ 
+  apiEndpoint: '/api/webfeedback',
+  apiKey: 'wf_your_api_key_here'
+});
 ```
 
-**Note:** These environment variables are server-side only and will not be exposed to the client, keeping your GitHub token secure.
-
-### 3. Run Development Server
+### 4. Run Development Server
 
 ```bash
 pnpm dev
@@ -152,7 +172,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the demo.
 │   ├── components/         # React components (including bundled UI)
 │   ├── hooks/              # React hooks
 │   ├── lib/                # Utilities (API client, storage, config)
-│   ├── scripts/            # Setup script for generating API routes
+│   ├── scripts/            # Legacy setup script (deprecated)
 │   ├── template-example/   # Example Next.js project
 │   ├── styles.css          # Required CSS variables
 │   ├── package.json        # Package configuration
@@ -165,18 +185,23 @@ Open [http://localhost:3000](http://localhost:3000) to see the demo.
 
 ## Architecture
 
-The widget uses a simple, direct architecture:
+The widget uses an API key-based architecture:
 
 ```
-[Your App]
-  └─ Widget (webfeedback package)
-      └─ API Client (fetch calls)
-          └─ Your API Routes (/api/webfeedback/*)
-              └─ Calls GitHub API directly using env vars
-                  └─ GitHub API
+[Client Website]
+  └─ Widget (script tag or package)
+      └─ API Client (fetch calls with API key)
+          └─ WebFeedback API Server (/api/webfeedback/*)
+              └─ Validates API key & domain
+                  └─ Looks up GitHub credentials from database
+                      └─ Calls GitHub API
 ```
 
-This architecture keeps your GitHub credentials secure on your server (in environment variables) while allowing the widget to work from any website. The API routes call GitHub directly - no proxy server needed!
+This architecture:
+- Keeps GitHub credentials secure in the database
+- Supports multiple customers with different GitHub repos
+- Validates domains for security
+- No environment variables needed on client side
 
 ## Updating the Widget
 

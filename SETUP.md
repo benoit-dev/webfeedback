@@ -1,10 +1,20 @@
 # Setup Guide for WebFeedback Widget
 
-## GitHub Configuration
+## Quick Start
 
-To test the widget and create GitHub issues, you need to set up a GitHub Personal Access Token.
+### 1. Create a Widget Customer
 
-### 1. Create GitHub Personal Access Token
+1. Go to `/widget/create` in your application
+2. Fill in the form:
+   - **Project Name**: A friendly name for your widget
+   - **GitHub Token**: Your GitHub personal access token (see below for how to create one)
+   - **GitHub Owner**: Your GitHub username or organization
+   - **GitHub Repo**: The repository where issues will be created
+   - **Allowed Domains**: List of domains that can use this widget (one per line)
+3. Click "Create Widget"
+4. Copy the generated API key and script tag
+
+### 2. Create GitHub Personal Access Token
 
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Click "Generate new token (classic)"
@@ -17,27 +27,21 @@ To test the widget and create GitHub issues, you need to set up a GitHub Persona
 5. Click "Generate token"
 6. **Copy the token immediately** (you won't see it again!)
 
-### 2. Configure Environment Variables
+### 3. Embed the Widget
 
-Create a `.env.local` file in the project root:
+Add the generated script tag to your HTML:
 
-```env
-GITHUB_TOKEN=your_personal_access_token_here
-GITHUB_OWNER=benoit-dev
-GITHUB_REPO=webfeedback
+```html
+<script src="https://yourdomain.com/widget/v1/loader.js?key=wf_abc123xyz"></script>
 ```
 
-Replace `your_personal_access_token_here` with the token you just created.
+Or use the data attribute:
 
-**Important:** These environment variables are server-side only (no `NEXT_PUBLIC_` prefix), which means your GitHub token will never be exposed to the client browser. This is more secure than using `NEXT_PUBLIC_*` variables.
+```html
+<script src="https://yourdomain.com/widget/v1/loader.js" data-key="wf_abc123xyz"></script>
+```
 
-### 3. Set Up Proxy Endpoints
-
-The widget makes API calls to proxy endpoints in your app, which then forward requests to the WebFeedback API server with your GitHub credentials. This keeps credentials secure on your server.
-
-See `webfeedback/README.md` for detailed proxy setup instructions and code examples.
-
-### 3. Test the Widget
+### 4. Test the Widget
 
 1. Start the development server:
    ```bash
@@ -62,13 +66,23 @@ See `webfeedback/README.md` for detailed proxy setup instructions and code examp
 
 ## Troubleshooting
 
-**Issue: "GitHub configuration not found"**
-- Make sure `.env.local` exists and has all three variables (GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO)
-- Make sure the variables do NOT have `NEXT_PUBLIC_` prefix (they should be server-side only)
-- Restart the dev server after creating or modifying `.env.local`
+**Issue: "API key is required" (400 error)**
+- Make sure the script tag includes the API key: `?key=wf_...`
+- Verify the API key format starts with `wf_`
+- Check that the customer is active in the database
+
+**Issue: "Domain not authorized" (403 error)**
+- Verify your domain is in the customer's `allowedDomains` list
+- Include both `example.com` and `www.example.com` if needed
+- Check the request origin matches exactly (including protocol and port)
+
+**Issue: "Invalid or inactive API key" (401 error)**
+- Verify the API key exists in the database
+- Check that the customer's `isActive` field is `true`
+- Make sure you're using the correct API key
 
 **Issue: "Failed to create GitHub issue"**
-- Check that your token has the correct permissions
+- Check that your GitHub token has the correct permissions
 - Verify the token hasn't expired
 - Make sure the repo name and owner are correct
 
