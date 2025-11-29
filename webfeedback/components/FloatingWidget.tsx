@@ -36,7 +36,9 @@ export function FloatingWidget({ className }: FloatingWidgetProps) {
   const normalizePageUrl = (): string => {
     const pathname = window.location.pathname;
     const search = window.location.search;
-    return pathname + search;
+    // Ensure we always return at least '/' for the root path
+    const url = pathname + search;
+    return url || '/';
   };
 
   useEffect(() => {

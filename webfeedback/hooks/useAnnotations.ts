@@ -14,18 +14,26 @@ export function useAnnotations(pageUrl: string) {
   const mappings = useMemo(() => getMappingsForPage(pageUrl), [pageUrl]);
 
   const fetchAnnotations = useCallback(async () => {
-      try {
-        setLoading(true);
+    // Don't fetch if pageUrl is empty or invalid
+    if (!pageUrl || pageUrl.trim() === '') {
+      setAnnotations([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
       setError(null);
       const data = await getAnnotationsWithComments(pageUrl, mappings);
-        setAnnotations(data);
-      } catch (err) {
+      setAnnotations(data);
+    } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch annotations');
       setError(error);
-        setAnnotations([]);
-      } finally {
-        setLoading(false);
-      }
+      setAnnotations([]);
+    } finally {
+      setLoading(false);
+    }
   }, [pageUrl, mappings]);
 
   useEffect(() => {

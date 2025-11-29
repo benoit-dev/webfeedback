@@ -22,9 +22,23 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    if (!body.pageUrl) {
+    // Log request body for debugging (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Annotations request body:', {
+        pageUrl: body.pageUrl,
+        mappingsLength: Array.isArray(body.mappings) ? body.mappings.length : 'not an array',
+        mappingsType: typeof body.mappings,
+      });
+    }
+    
+    if (!body.pageUrl || typeof body.pageUrl !== 'string' || body.pageUrl.trim() === '') {
+      console.error('Invalid or missing pageUrl in request body:', {
+        pageUrl: body.pageUrl,
+        type: typeof body.pageUrl,
+        body,
+      });
       return NextResponse.json(
-        { error: 'pageUrl is required' },
+        { error: 'pageUrl is required and must be a non-empty string' },
         { 
           status: 400,
           headers: getCorsHeaders(requestOrigin)
@@ -32,14 +46,14 @@ export async function POST(request: Request) {
       );
     }
     
+    // Ensure mappings is always an array (default to empty array if missing or invalid)
+    const mappings = Array.isArray(body.mappings) ? body.mappings : [];
+    
     if (!Array.isArray(body.mappings)) {
-      return NextResponse.json(
-        { error: 'mappings must be an array' },
-        { 
-          status: 400,
-          headers: getCorsHeaders(requestOrigin)
-        }
-      );
+      console.warn('mappings is not an array, defaulting to empty array:', {
+        mappings: body.mappings,
+        type: typeof body.mappings,
+      });
     }
     
     let config;
@@ -104,7 +118,7 @@ export async function POST(request: Request) {
     
     // Combine mappings with issues and fetch comments
     const annotationResults = await Promise.all(
-      body.mappings.map(async (mapping: any) => {
+      mappings.map(async (mapping: any) => {
         const issue = filteredIssues.find((i: any) => i.number === mapping.issueNumber);
         if (!issue) {
           // Issue might have been deleted or doesn't match filters
