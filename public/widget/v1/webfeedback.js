@@ -21374,6 +21374,12 @@ ${description || "No additional description provided."}`;
     const [error, setError] = (0, import_react13.useState)(null);
     const mappings = (0, import_react13.useMemo)(() => getMappingsForPage(pageUrl), [pageUrl]);
     const fetchAnnotations = (0, import_react13.useCallback)(async () => {
+      if (!pageUrl || pageUrl.trim() === "") {
+        setAnnotations([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
       try {
         setLoading(true);
         setError(null);
@@ -21655,7 +21661,8 @@ ${description || "No additional description provided."}`;
     const normalizePageUrl = () => {
       const pathname = window.location.pathname;
       const search = window.location.search;
-      return pathname + search;
+      const url = pathname + search;
+      return url || "/";
     };
     (0, import_react15.useEffect)(() => {
       setPageUrl(normalizePageUrl());
