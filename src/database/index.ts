@@ -7,7 +7,8 @@ if (!process.env.DATABASE_URL) {
 }
 
 const connectionString = process.env.DATABASE_URL;
-const client = postgres(connectionString);
+// Disable prefetch as it is not supported for "Transaction" pool mode (Supabase Connection Pooler)
+const client = postgres(connectionString, { prepare: false });
 
 export const database = drizzle(client, { schema });
 export type Database = typeof database;

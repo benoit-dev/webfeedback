@@ -11,7 +11,8 @@
     "dev:widget": "tsx scripts/build-widget.ts --watch",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:prod:migrate": "bash scripts/db-prod-migrate.sh"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.0.4",
