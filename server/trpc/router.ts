@@ -46,6 +46,24 @@ function normalizeUrlForComparison(url: string): string {
   }
 }
 
+// Helper function to get the base URL for widget script tags
+function getWidgetBaseUrl(): string {
+  // Check for explicit production URL
+  if (process.env.NEXT_PUBLIC_URL) {
+    return process.env.NEXT_PUBLIC_URL;
+  }
+
+  // Check for Vercel URL (automatically set by Vercel)
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  }
+
+  // Throw an error if no URL is configured
+  throw new Error(
+      'NEXT_PUBLIC_URL or NEXT_PUBLIC_VERCEL_URL must be set. Please set NEXT_PUBLIC_URL to your domain (e.g., https://yourdomain.com)'
+    );
+}
+
 export const appRouter = router({
   // Example: health check
   health: publicProcedure.query(() => {
@@ -459,7 +477,7 @@ export const appRouter = router({
             .returning();
 
           // Generate script tag HTML
-          const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://yourdomain.com';
+          const baseUrl = getWidgetBaseUrl();
           const scriptTag = `<script src="${baseUrl}/widget/v1/loader.js?key=${customer.apiKey}"></script>`;
 
           return {
@@ -575,7 +593,7 @@ export const appRouter = router({
             throw new Error('Invalid API key format');
           }
 
-          const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://yourdomain.com';
+          const baseUrl = getWidgetBaseUrl();
           return `<script src="${baseUrl}/widget/v1/loader.js?key=${input.apiKey}"></script>`;
         }),
     }),
