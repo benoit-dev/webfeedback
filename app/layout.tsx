@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
-import { WebFeedbackWidget } from "./webfeedback-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +31,11 @@ export default function RootLayout({
       >
         <Providers>
           {children}
-          <WebFeedbackWidget />
         </Providers>
+        <Script
+          src="https://webfeedback-production.up.railway.app/widget/v1/loader.js?key=wf_lfadmlwreupgdlis1mwpufj8"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
